@@ -1,15 +1,10 @@
-import * as React from "react"
-import { Moon, Sun } from "lucide-react"
+import * as React from "react";
+import { Moon, Sun } from "lucide-react";
 
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Button } from "./ui/button"
+import { SidebarMenu, SidebarMenuButton } from "@/components/ui/sidebar";
 
 export function ThemeSwitcher() {
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(true);
 
   // Função para alternar o tema
   const toggleTheme = () => {
@@ -23,27 +18,13 @@ export function ThemeSwitcher() {
 
   return (
     <SidebarMenu>
-      <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <div className=" aspect-square size-10 items-center justify-center ">
-              <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleTheme}
-        >
-          {isDarkMode ? (
-            <Moon className="" />
-          ) : (
-            <Sun className="" />
-          )}
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-              </div>   
-            </SidebarMenuButton>
-      </SidebarMenuItem>
+      <SidebarMenuButton
+        size="lg"
+        className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-transparent cursor-default data-[active=true]:bg-transparent w-fit aspect-square flex justify-center"
+        onClick={toggleTheme}
+      >
+        {isDarkMode ? <Moon className="" /> : <Sun className="" />}
+      </SidebarMenuButton>
     </SidebarMenu>
-  )
+  );
 }
