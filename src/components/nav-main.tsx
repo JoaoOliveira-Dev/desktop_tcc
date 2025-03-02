@@ -1,4 +1,4 @@
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { ChevronRight, Frame, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/collapsible"
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -15,6 +14,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
 
 export function NavMain({
   items,
@@ -32,8 +32,20 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <Separator orientation="horizontal" className="mr-2 mb-2" />
       <SidebarMenu>
+        <SidebarMenuButton asChild>
+          <a href="API's">
+            <Frame />
+            <span>API's</span>
+          </a>
+        </SidebarMenuButton>
+        <SidebarMenuButton asChild>
+          <a href="API's">
+            <Frame />
+            <span>Relatório</span>
+          </a>
+        </SidebarMenuButton>
         {items.map((item) => (
           <Collapsible
             key={item.title}
