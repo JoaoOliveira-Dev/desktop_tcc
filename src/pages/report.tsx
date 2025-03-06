@@ -7,7 +7,6 @@ import Scope from "../components/scope";
 import Vuln from "../components/vuln";
 
 import { Card } from "@/components/ui/card";
-import { NavBar } from "@/components/navBar";
 
 import { Alvo, VulnType } from "../types/types";
 import { cn } from "@/lib/utils";

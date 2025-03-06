@@ -1,4 +1,4 @@
-import { ChevronRight, Frame, type LucideIcon } from "lucide-react"
+import { BookOpen, ChevronRight, Frame, House, type LucideIcon } from "lucide-react"
 
 import {
   Collapsible,
@@ -31,22 +31,34 @@ export function NavMain({
   }[]
 }) {
   return (
-    <SidebarGroup>
+    <SidebarGroup >
       <Separator orientation="horizontal" className="mr-2 mb-2" />
-      <SidebarMenu>
-        <SidebarMenuButton asChild>
-          <a href="API's">
+      <SidebarMenu className="flex flex-col items-center space-y-4">
+        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+          <a href="/" className="text-center">
+            <House /> {/* Ajuste o tamanho do ícone conforme necessário */}
+            {/* <span>Home</span> Espaçamento entre o ícone e o texto */}
+          </a>
+        </SidebarMenuButton>
+        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+          <a href="API's" className="text-center">
             <Frame />
             <span>API's</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton asChild>
-          <a href="API's">
-            <Frame />
+        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+          <a href="/report" className="text-center">
+            <BookOpen />
             <span>Relatório</span>
           </a>
         </SidebarMenuButton>
-        {items.map((item) => (
+        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+          <a href="/notes" className="text-center">
+            <BookOpen />
+            <span>Notas</span>
+          </a>
+        </SidebarMenuButton>
+        {/* {items.map((item) => (
           <Collapsible
             key={item.title}
             asChild
@@ -76,7 +88,7 @@ export function NavMain({
               </CollapsibleContent>
             </SidebarMenuItem>
           </Collapsible>
-        ))}
+        ))} */}
       </SidebarMenu>
     </SidebarGroup>
   )
