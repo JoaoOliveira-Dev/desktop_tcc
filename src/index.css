@@ -36,7 +36,9 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%}
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --scrollbar-thumb: rgba(150, 150, 150, 0.5); /* Cinza claro para tema claro */
+    --scrollbar-thumb-hover: rgba(150, 150, 150, 0.7);}
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -69,6 +71,33 @@
     --sidebar-accent: 215 27.9% 16.9%;
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 215 27.9% 16.9%;
-    --sidebar-ring: 216 12.2% 83.9%
+    --sidebar-ring: 216 12.2% 83.9%;
+    --scrollbar-thumb: rgba(100, 100, 100, 0.5); /* Cinza mais escuro para tema escuro */
+    --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
   }
+}
+
+/* Estilização global para todos os elementos com rolagem */
+* {
+  scrollbar-width: thin; /* Para Firefox */
+  scrollbar-color: rgba(150, 150, 150, 0.5) transparent; /* Thumb visível, track transparente */
+}
+
+*::-webkit-scrollbar {
+  width: 8px; /* Largura fina */
+  height: 8px; /* Altura fina para rolagem horizontal */
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent; /* Fundo transparente */
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.5); /* Cor do thumb (cinza semi-transparente) */
+  border-radius: 10px; /* Borda arredondada */
+  border: none; /* Sem borda extra */
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.7); /* Cor mais escura ao passar o mouse */
 }

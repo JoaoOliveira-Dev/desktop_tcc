@@ -34,25 +34,25 @@ export function NavMain({
     <SidebarGroup >
       <Separator orientation="horizontal" className="mr-2 mb-2" />
       <SidebarMenu className="flex flex-col items-center space-y-4">
-        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
           <a href="/" className="text-center">
             <House /> {/* Ajuste o tamanho do ícone conforme necessário */}
-            {/* <span>Home</span> Espaçamento entre o ícone e o texto */}
+            <span>Início</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
           <a href="API's" className="text-center">
             <Frame />
             <span>API's</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
           <a href="/report" className="text-center">
             <BookOpen />
             <span>Relatório</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton asChild className="size-20 flex flex-col items-center justify-center">
+        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
           <a href="/notes" className="text-center">
             <BookOpen />
             <span>Notas</span>

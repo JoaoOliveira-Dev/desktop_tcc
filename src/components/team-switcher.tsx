@@ -26,7 +26,7 @@ export function ThemeSwitcher() {
   }, [isDarkMode]);
 
   return (
-    <SidebarMenu>
+    <SidebarMenu className="flex flex-col items-center space-y-4">
       <SidebarMenuButton
       size="lg"
       className="hover:bg-transparent cursor-default w-fit aspect-square flex justify-center items-center"
