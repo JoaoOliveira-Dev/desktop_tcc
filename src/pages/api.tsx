@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -157,7 +157,7 @@ export default function ApiTester() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen ">
+    <div className="flex justify-center items-center min-h-screen mt-5 mb-5">
       <Card className="w-full max-w-7xl">
         <CardHeader>
           <CardTitle>API Tester</CardTitle>
