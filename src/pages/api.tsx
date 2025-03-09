@@ -152,7 +152,7 @@ export default function ApiTester() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex justify-center items-center min-h-screen ">
       <Card className="w-full max-w-7xl">
         <CardHeader>
           <CardTitle>API Tester</CardTitle>
