@@ -152,7 +152,7 @@ export default function ApiTester() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen ">
+    <div className="flex justify-center items-center min-h-screen mt-5 mb-5">
       <Card className="w-full max-w-7xl">
         <CardHeader>
           <CardTitle>API Tester</CardTitle>
@@ -174,9 +174,9 @@ export default function ApiTester() {
                     method === "GET"
                       ? "text-green-600"
                       : method === "POST"
-                      ? "text-blue-500"
-                      : method === "PUT"
                       ? "text-orange-500"
+                      : method === "PUT"
+                      ? "text-blue-500"
                       : "text-red-500"
                   }`}
                 >
