@@ -1,10 +1,16 @@
-import { BookOpen, ChevronRight, Frame, House, type LucideIcon } from "lucide-react"
+import {
+  BookOpen,
+  ChevronRight,
+  Frame,
+  House,
+  type LucideIcon,
+} from "lucide-react";
 
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarMenu,
@@ -13,46 +19,58 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 export function NavMain({
   items,
 }: {
   items: {
-    title: string
-    url: string
-    icon?: LucideIcon
-    isActive?: boolean
+    title: string;
+    url: string;
+    icon?: LucideIcon;
+    isActive?: boolean;
     items?: {
-      title: string
-      url: string
-    }[]
-  }[]
+      title: string;
+      url: string;
+    }[];
+  }[];
 }) {
   return (
-    <SidebarGroup >
+    <SidebarGroup>
       <Separator orientation="horizontal" className="mr-2 mb-2" />
       <SidebarMenu className="flex flex-col items-center space-y-4">
-        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
+        <SidebarMenuButton
+          asChild
+          className="size-16 flex flex-col items-center justify-center"
+        >
           <a href="/" className="text-center">
             <House /> {/* Ajuste o tamanho do ícone conforme necessário */}
             <span>Início</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
-          <a href="API's" className="text-center">
+        <SidebarMenuButton
+          asChild
+          className="size-16 flex flex-col items-center justify-center"
+        >
+          <a href="/api" className="text-center">
             <Frame />
             <span>API's</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
+        <SidebarMenuButton
+          asChild
+          className="size-16 flex flex-col items-center justify-center"
+        >
           <a href="/report" className="text-center">
             <BookOpen />
             <span>Relatório</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton asChild className="size-16 flex flex-col items-center justify-center">
+        <SidebarMenuButton
+          asChild
+          className="size-16 flex flex-col items-center justify-center"
+        >
           <a href="/notes" className="text-center">
             <BookOpen />
             <span>Notas</span>
@@ -91,5 +109,5 @@ export function NavMain({
         ))} */}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }
