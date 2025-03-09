@@ -39,14 +39,20 @@ export default function Report() {
   };
 
   return (
-    <div className={cn(
-          "border-gray-200 bg-white text-gray-950 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50",
-        )}>
+    <div
+      className={cn(
+        "border-gray-200 bg-white text-gray-950 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50 flex justify-center items-center min-h-screen mt-5 mb-5"
+      )}
+    >
       {/* <NavBar /> */}
-      <Card className="p-8 max-w-3xl mx-auto mt-3">
+      <Card className="p-8 w-full max-w-7xl mx-auto mt-3">
         <Scope alvos={alvos} setAlvos={setAlvos} />
-        <Vuln onAddOrUpdateVulnerability={handleAddOrUpdateVulnerability} vulns={vulns} setVulns={setVulns} />
-        
+        <Vuln
+          onAddOrUpdateVulnerability={handleAddOrUpdateVulnerability}
+          vulns={vulns}
+          setVulns={setVulns}
+        />
+
         {/* Botões de Ação */}
         <div className="flex justify-between mt-6">
           {/* <Button onClick={clearVulnerabilities} variant="destructive">

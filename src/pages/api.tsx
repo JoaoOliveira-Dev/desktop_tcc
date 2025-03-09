@@ -47,9 +47,7 @@ export default function ApiTester() {
     rawHeaders.split("\n").forEach((line) => {
       const [key, ...valueParts] = line.split(":");
       const value = valueParts.join(":").trim();
-      if (key && value) {
-        headers[key.trim()] = value;
-      }
+      if (key && value) headers[key.trim()] = value;
     });
     return headers;
   };
@@ -63,9 +61,7 @@ export default function ApiTester() {
       rawBody.split("\n").forEach((line) => {
         const [key, ...valueParts] = line.split(":");
         const value = valueParts.join(":").trim();
-        if (key && value) {
-          body[key.trim()] = value;
-        }
+        if (key && value) body[key.trim()] = value;
       });
       return body; // Retorna como objeto se não for JSON
     }
@@ -88,6 +84,15 @@ export default function ApiTester() {
     }
   };
 
+  // Função para verificar se o corpo é HTML
+  const isHtml = (content: string): boolean => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, "text/html");
+    return Array.from(doc.body.childNodes).some(
+      (node) => node.nodeType === Node.ELEMENT_NODE
+    );
+  };
+
   const handleFetch = async () => {
     if (!url) {
       setError("Por favor, insira uma URL válida.");
@@ -107,7 +112,10 @@ export default function ApiTester() {
       const requestOptions: RequestInit = {
         method: method,
         headers: {
-          "Content-Type": "application/json",
+          // Inclui Content-Type apenas para métodos com corpo
+          ...(["POST", "PUT"].includes(method) && {
+            "Content-Type": "application/json",
+          }),
           ...parsedHeaders,
         },
         body: ["POST", "PUT"].includes(method)
@@ -115,8 +123,14 @@ export default function ApiTester() {
           : undefined,
       };
 
-      // Fazendo a solicitação
-      const res = await fetch(url, requestOptions);
+      // Fazendo a solicitação com um proxy alternativo
+      const proxyUrl = "https://api.allorigins.win/raw?url=";
+      const fullUrl = url.startsWith("http") ? url : `http://${url}`;
+
+      const res = await fetch(
+        proxyUrl + encodeURIComponent(fullUrl),
+        requestOptions
+      );
 
       // Extraindo informações da resposta
       const responseBody = await res.text(); // Captura o corpo da resposta como texto
@@ -142,17 +156,8 @@ export default function ApiTester() {
     }
   };
 
-  // Função para verificar se o corpo é HTML
-  const isHtml = (content: string): boolean => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(content, "text/html");
-    return Array.from(doc.body.childNodes).some(
-      (node) => node.nodeType === Node.ELEMENT_NODE
-    );
-  };
-
   return (
-    <div className="flex justify-center items-center min-h-screen mt-5 mb-5">
+    <div className="flex justify-center items-center min-h-screen ">
       <Card className="w-full max-w-7xl">
         <CardHeader>
           <CardTitle>API Tester</CardTitle>
