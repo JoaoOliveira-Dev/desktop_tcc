@@ -4,9 +4,9 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 40 21% 95%;
     --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
+    --card: 40 21% 95%;
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
@@ -37,8 +37,14 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --scrollbar-thumb: rgba(150, 150, 150, 0.5); /* Cinza claro para tema claro */
-    --scrollbar-thumb-hover: rgba(150, 150, 150, 0.7);}
+    --scrollbar-thumb: rgba(
+      150,
+      150,
+      150,
+      0.5
+    ); /* Cinza claro para tema claro */
+    --scrollbar-thumb-hover: rgba(150, 150, 150, 0.7);
+  }
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -72,7 +78,12 @@
     --sidebar-accent-foreground: 210 20% 98%;
     --sidebar-border: 215 27.9% 16.9%;
     --sidebar-ring: 216 12.2% 83.9%;
-    --scrollbar-thumb: rgba(100, 100, 100, 0.5); /* Cinza mais escuro para tema escuro */
+    --scrollbar-thumb: rgba(
+      100,
+      100,
+      100,
+      0.5
+    ); /* Cinza mais escuro para tema escuro */
     --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
   }
 }
@@ -93,7 +104,12 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(150, 150, 150, 0.5); /* Cor do thumb (cinza semi-transparente) */
+  background: rgba(
+    150,
+    150,
+    150,
+    0.5
+  ); /* Cor do thumb (cinza semi-transparente) */
   border-radius: 10px; /* Borda arredondada */
   border: none; /* Sem borda extra */
 }

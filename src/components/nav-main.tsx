@@ -7,11 +7,6 @@ import {
 } from "lucide-react";
 
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
@@ -21,6 +16,11 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@radix-ui/react-collapsible";
 
 export function NavMain({
   items,
@@ -39,13 +39,12 @@ export function NavMain({
   return (
     <SidebarGroup>
       <Separator orientation="horizontal" className="mr-2 mb-2" />
-      <SidebarMenu className="flex flex-col items-center space-y-4">
-        <SidebarMenuButton
+      <SidebarMenu>
+        {/* <SidebarMenuButton
           asChild
           className="size-16 flex flex-col items-center justify-center"
         >
           <a href="/" className="text-center">
-            <House /> {/* Ajuste o tamanho do ícone conforme necessário */}
             <span>Início</span>
           </a>
         </SidebarMenuButton>
@@ -75,8 +74,8 @@ export function NavMain({
             <BookOpen />
             <span>Notas</span>
           </a>
-        </SidebarMenuButton>
-        {/* {items.map((item) => (
+        </SidebarMenuButton> */}
+        {items.map((item) => (
           <Collapsible
             key={item.title}
             asChild
@@ -106,7 +105,7 @@ export function NavMain({
               </CollapsibleContent>
             </SidebarMenuItem>
           </Collapsible>
-        ))} */}
+        ))}
       </SidebarMenu>
     </SidebarGroup>
   );

@@ -7,22 +7,19 @@ import { Alvo, VulnType } from "../types/types";
 import ResultsTable from "./resultsTable";
 
 // Registra a fonte Rasa
-// Font.register({
-//   family: "Rasa",
-//   fonts: [
-//     {
-//       src: "../lib/Rasa-Italic-VariableFont_wght.ttf", // Caminho relativo
-//     },
-//     {
-//       src: "../lib/Rasa-VariableFont_wght.ttf", // Caminho relativo
-//       fontStyle: "italic",
-//     },
-//   ],
-// });
+Font.register({
+  family: "Open Sans",
+  fonts: [
+    { src: "/public/fonts/OpenSans-Regular.ttf" },
+    { src: "/public/fonts/OpenSans-Bold.ttf", fontWeight: "bold" },
+    { src: "/public/fonts/OpenSans-Italic.ttf", fontStyle: "italic" },
+  ],
+});
 
 const styles = StyleSheet.create({
   page: {
     padding: 30,
+    fontFamily: "Open Sans",
   },
   section: {
     marginBottom: 20,

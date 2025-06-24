@@ -1,4 +1,4 @@
-import { View, Text } from "@react-pdf/renderer";
+import { View, Text, Font } from "@react-pdf/renderer";
 
 import { Alvo } from "../types/types";
 
@@ -7,6 +7,23 @@ import { styles } from "@/utils/s_scopeTable";
 interface ScopeTableProps {
   alvos: Alvo[];
 }
+
+Font.register({
+  family: "Rasa",
+  fonts: [
+    {
+      src: "../fonts/Rasa-Regular.ttf", // Caminho relativo
+    },
+    {
+      src: "../fonts/Rasa-Italic.ttf", // Caminho relativo
+      fontStyle: "italic",
+    },
+    {
+      src: "../fonts/Rasa-Italic.ttf", // Caminho relativo
+      fontStyle: "bold",
+    },
+  ],
+});
 
 const ScopeTable = ({ alvos }: ScopeTableProps) => (
   <View style={styles.tableContainer}>
