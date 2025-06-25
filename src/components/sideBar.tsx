@@ -51,20 +51,12 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "GET",
-          url: "#",
-        },
-        {
-          title: "P",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
+          title: "Reports",
+          url: "/report",
         },
         {
           title: "API's",
-          url: "#",
+          url: "/api",
           icon: Frame,
         },
       ],
@@ -86,7 +78,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavUser />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain />
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>

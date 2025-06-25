@@ -2,12 +2,15 @@ import {
   BookOpen,
   ChevronRight,
   Frame,
-  House,
-  type LucideIcon,
+  NotebookPen,
+  Network,
+  Plus,
+  Home,
 } from "lucide-react";
 
 import {
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -21,86 +24,149 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@radix-ui/react-collapsible";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
-export function NavMain({
-  items,
-}: {
-  items: {
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
-    items?: {
-      title: string;
-      url: string;
-    }[];
-  }[];
-}) {
+import { useState } from "react";
+
+// Tipagem do projeto
+type Project = {
+  id: number;
+  name: string;
+};
+
+export function NavMain() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectName, setProjectName] = useState("");
+
+  const handleCreateProject = () => {
+    if (!projectName.trim()) return;
+
+    const newProject: Project = {
+      id: Date.now(), // ID único baseado em timestamp
+      name: projectName.trim(),
+    };
+
+    setProjects((prev) => [...prev, newProject]);
+    setProjectName(""); // limpar campo
+  };
+
   return (
     <SidebarGroup>
       <Separator orientation="horizontal" className="mr-2 mb-2" />
       <SidebarMenu>
-        {/* <SidebarMenuButton
-          asChild
-          className="size-16 flex flex-col items-center justify-center"
-        >
-          <a href="/" className="text-center">
-            <span>Início</span>
+        <SidebarMenuButton asChild>
+          <a href="/" className="flex items-center">
+            <Home size={18} className="mr-2" />
+            <span>Home</span>
           </a>
         </SidebarMenuButton>
-        <SidebarMenuButton
-          asChild
-          className="size-16 flex flex-col items-center justify-center"
-        >
-          <a href="/api" className="text-center">
-            <Frame />
-            <span>API's</span>
-          </a>
-        </SidebarMenuButton>
-        <SidebarMenuButton
-          asChild
-          className="size-16 flex flex-col items-center justify-center"
-        >
-          <a href="/report" className="text-center">
-            <BookOpen />
-            <span>Relatório</span>
-          </a>
-        </SidebarMenuButton>
-        <SidebarMenuButton
-          asChild
-          className="size-16 flex flex-col items-center justify-center"
-        >
-          <a href="/notes" className="text-center">
-            <BookOpen />
-            <span>Notas</span>
-          </a>
-        </SidebarMenuButton> */}
-        {items.map((item) => (
+        <SidebarGroupLabel>Projetos</SidebarGroupLabel>
+        {/* Botão de criação de projeto */}
+        <SidebarMenuItem>
+          <SidebarMenuButton tooltip="Criar novo projeto">
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="flex items-center w-full text-left">
+                  <Plus className="mr-2" />
+                  Novo Projeto
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-white">
+                    Criar novo projeto
+                  </DialogTitle>
+                  <DialogDescription>
+                    Adicione um nome para o seu projeto.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center gap-2">
+                  <div className="grid flex-1 gap-2">
+                    <Label htmlFor="projeto" className="sr-only">
+                      Projeto
+                    </Label>
+                    <Input
+                      id="projeto"
+                      placeholder="Ex: Invasão Rede X"
+                      value={projectName}
+                      onChange={(e) => setProjectName(e.target.value)}
+                      className="text-white"
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="sm:justify-start">
+                  <DialogClose asChild>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleCreateProject}
+                    >
+                      Salvar
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        {/* Listar projetos criados */}
+        {projects.map((project) => (
           <Collapsible
-            key={item.title}
+            key={project.id}
             asChild
-            defaultOpen={item.isActive}
+            defaultOpen={false}
             className="group/collapsible"
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                <SidebarMenuButton tooltip={project.name}>
+                  <Frame size={18} className="mr-2" />
+                  <span>{project.name}</span>
+                  <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
+
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
-                          <span>{subItem.title}</span>
-                        </a>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <a href={`/projects/${project.id}/reports`}>
+                        <BookOpen size={16} className="mr-2" />
+                        Relatórios
+                      </a>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <a href={`/projects/${project.id}/api`}>
+                        <Network size={16} className="mr-2" />
+                        Testes de API
+                      </a>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <a href={`/projects/${project.id}/notes`}>
+                        <NotebookPen size={16} className="mr-2" />
+                        Notas
+                      </a>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

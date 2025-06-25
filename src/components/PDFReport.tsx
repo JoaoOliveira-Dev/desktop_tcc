@@ -10,9 +10,9 @@ import ResultsTable from "./resultsTable";
 Font.register({
   family: "Open Sans",
   fonts: [
-    { src: "/public/fonts/OpenSans-Regular.ttf" },
-    { src: "/public/fonts/OpenSans-Bold.ttf", fontWeight: "bold" },
-    { src: "/public/fonts/OpenSans-Italic.ttf", fontStyle: "italic" },
+    { src: "/fonts/OpenSans-Regular.ttf" },
+    { src: "/fonts/OpenSans-Bold.ttf", fontWeight: "bold" },
+    { src: "/fonts/OpenSans-Italic.ttf", fontStyle: "italic" },
   ],
 });
 
