@@ -64,7 +64,17 @@ const data = {
   ],
   projects: [
     {
-      name: "API's",
+      name: "Gerador de payloads",
+      url: "#",
+      icon: Frame,
+    },
+    {
+      name: "API's de testes",
+      url: "#",
+      icon: Frame,
+    },
+    {
+      name: "Listas",
       url: "#",
       icon: Frame,
     },

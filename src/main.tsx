@@ -8,6 +8,7 @@ import NotFound from "./pages/notFound";
 import { AppSidebar } from "./components/sideBar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import ApiTester from "./pages/api";
+import MeusProjetos from "./pages/myProjects";
 
 const App = () => (
   <SidebarProvider>
@@ -15,6 +16,7 @@ const App = () => (
     <SidebarInset>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/my-projects" element={<MeusProjetos />} />
         <Route path="/report" element={<Report />} />
         <Route path="/api" element={<ApiTester />} />
         <Route path="*" element={<NotFound />} />

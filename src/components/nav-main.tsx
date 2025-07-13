@@ -80,7 +80,7 @@ export function NavMain() {
               <DialogTrigger asChild>
                 <button className="flex items-center w-full text-left">
                   <Plus className="mr-2" />
-                  Novo Projeto
+                  <span>Novo Projeto</span>
                 </button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md text-white">
@@ -143,7 +143,7 @@ export function NavMain() {
                 <SidebarMenuSub>
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <a href={`/projects/${project.id}/reports`}>
+                      <a href={`/report`}>
                         <BookOpen size={16} className="mr-2" />
                         Relatórios
                       </a>
@@ -152,7 +152,7 @@ export function NavMain() {
 
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <a href={`/projects/${project.id}/api`}>
+                      <a href={`/api`}>
                         <Network size={16} className="mr-2" />
                         Testes de API
                       </a>

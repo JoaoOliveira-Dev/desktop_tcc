@@ -33,8 +33,8 @@ const Dashboard = () => {
             <p className="text-muted-foreground text-sm">
               Acesse todos os projetos criados e continue sua investigação.
             </p>
-            <Button variant="secondary" className="mt-4 w-full">
-              Ver Projetos
+            <Button variant="secondary" className="mt-4 w-full" asChild>
+              <a href="/my-projects">Ver Projetos</a>
             </Button>
           </CardContent>
         </Card>
