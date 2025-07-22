@@ -3,7 +3,11 @@ import {
   AudioWaveform,
   Command,
   Frame,
+  Pi,
+  ScrollText ,
+  GitPullRequestArrow,
   GalleryVerticalEnd,
+  CodeXml,
   SquareTerminal,
 } from "lucide-react";
 
@@ -65,18 +69,23 @@ const data = {
   projects: [
     {
       name: "Gerador de payloads",
-      url: "#",
-      icon: Frame,
+      url: "/payload-generator",
+      icon: CodeXml ,
     },
     {
       name: "API's de testes",
       url: "#",
-      icon: Frame,
+      icon: GitPullRequestArrow ,
     },
     {
       name: "Listas",
       url: "#",
-      icon: Frame,
+      icon: ScrollText ,
+    },
+    {
+      name: "Encoder/Decoder",
+      url: "#",
+      icon: Pi,
     },
   ],
 };
