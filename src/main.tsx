@@ -10,6 +10,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import ApiTester from "./pages/api";
 import MeusProjetos from "./pages/myProjects";
 import PayloadGenerator from "./pages/payloadGenerator";
+import EncoderDecoder from "./pages/encoderDecorder";
 
 const App = () => (
   <SidebarProvider>
@@ -22,6 +23,7 @@ const App = () => (
         <Route path="/api" element={<ApiTester />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/payload-generator" element={<PayloadGenerator />} />
+        <Route path="/encoder-decoder" element={<EncoderDecoder />} />
       </Routes>
     </SidebarInset>
   </SidebarProvider>

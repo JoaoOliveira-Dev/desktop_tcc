@@ -84,7 +84,7 @@ const data = {
     },
     {
       name: "Encoder/Decoder",
-      url: "#",
+      url: "/encoder-decoder",
       icon: Pi,
     },
   ],

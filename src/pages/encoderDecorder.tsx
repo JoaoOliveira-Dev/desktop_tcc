@@ -3,12 +3,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus } from "lucide-react";
 
 export default function EncoderDecoder() {
   const [mode, setMode] = useState<"encode" | "decode">("encode");
-  const [type, setType] = useState<"base64" | "url" | "hex">("base64");
+  const [steps, setSteps] = useState([{ type: "base64" as "base64" | "url" | "hex" }]);
   const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
 
   function encodeBase64(text: string) {
     return btoa(unescape(encodeURIComponent(text)));
@@ -46,45 +46,72 @@ export default function EncoderDecoder() {
     }
   }
 
-  function handleProcess() {
-    let result = "";
+  function process(text: string, type: string) {
     if (mode === "encode") {
-      if (type === "base64") result = encodeBase64(input);
-      if (type === "url") result = encodeURL(input);
-      if (type === "hex") result = encodeHex(input);
+      if (type === "base64") return encodeBase64(text);
+      if (type === "url") return encodeURL(text);
+      if (type === "hex") return encodeHex(text);
     } else {
-      if (type === "base64") result = decodeBase64(input);
-      if (type === "url") result = decodeURL(input);
-      if (type === "hex") result = decodeHex(input);
+      if (type === "base64") return decodeBase64(text);
+      if (type === "url") return decodeURL(text);
+      if (type === "hex") return decodeHex(text);
     }
-    setOutput(result);
+    return text;
   }
 
+  const results = steps.reduce((acc, step, index) => {
+    const result = process(acc[index], step.type);
+    acc.push(result);
+    return acc;
+  }, [input]);
+
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-4">
+    <div className="w-4/6 mx-auto p-4 space-y-4 text-white">
       <Tabs value={mode} onValueChange={v => setMode(v as "encode" | "decode")}>
-        <TabsList className="w-full justify-between">
+        <TabsList className="w-full">
           <TabsTrigger value="encode">Encode</TabsTrigger>
           <TabsTrigger value="decode">Decode</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      <Select value={type} onValueChange={(v) => setType(v as any)}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Escolha o tipo de codificação" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="base64">Base64</SelectItem>
-          <SelectItem value="url">URL</SelectItem>
-          <SelectItem value="hex">Hex</SelectItem>
-        </SelectContent>
-      </Select>
-
       <Textarea placeholder="Texto de entrada" value={input} onChange={e => setInput(e.target.value)} />
-      <Button className="w-full" onClick={handleProcess}>
-        {mode === "encode" ? "Codificar" : "Decodificar"}
+
+      {steps.map((step, i) => (
+        <div key={i} className="space-y-2">
+          <Select value={step.type} onValueChange={v => {
+            const newSteps = [...steps];
+            newSteps[i].type = v as any;
+            setSteps(newSteps);
+          }}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Escolha o tipo de codificação" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="base64">Base64</SelectItem>
+              <SelectItem value="url">URL</SelectItem>
+              <SelectItem value="hex">Hex</SelectItem>
+            </SelectContent>
+          </Select>
+          <Textarea readOnly value={results[i + 1]} placeholder="Resultado desta etapa" />
+          {steps.length > 1 && (
+            <Button
+            variant="destructive"
+            onClick={() => setSteps(steps.filter((_, index) => index !== i))}
+            >
+              Remover etapa
+            </Button>
+          )
+          }
+        </div>
+      ))}
+
+      <Button
+        className="w-full flex items-center gap-2"
+        variant="secondary"
+        onClick={() => setSteps([...steps, { type: "base64" }])}
+      >
+        <Plus className="w-4 h-4" /> Adicionar etapa
       </Button>
-      <Textarea placeholder="Resultado" value={output} readOnly />
     </div>
   );
 }
