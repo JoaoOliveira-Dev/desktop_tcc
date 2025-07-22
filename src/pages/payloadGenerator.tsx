@@ -38,7 +38,7 @@ export default function PayloadGenerator() {
     <div className="p-6 space-y-6 text-white min-h-screen">
       {/* IP & Port */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="#1c1c1c]">
+        <Card>
           <CardContent className="p-4">
             <h2 className="text-lg font-bold">IP & Port</h2>
               <div className="flex-1">
@@ -53,7 +53,7 @@ export default function PayloadGenerator() {
         </Card>
 
         {/* Listener */}
-        <Card className=" #1c1c1c]">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">Listener</h2>
