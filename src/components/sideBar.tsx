@@ -9,6 +9,9 @@ import {
   GalleryVerticalEnd,
   CodeXml,
   SquareTerminal,
+  Settings2,
+  BookOpen,
+  Bot,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -47,7 +50,7 @@ const data = {
       plan: "Free",
     },
   ],
-  navMain: [
+  navMains: [
     {
       title: "Notes",
       url: "#",
@@ -66,7 +69,95 @@ const data = {
       ],
     },
   ],
-  projects: [
+  navMain: [
+    {
+      title: "API's de testes",
+      url: "/api",
+      icon: GitPullRequestArrow,
+      items: [
+        {
+          title: "Genesis",
+          url: "#",
+        },
+        {
+          title: "Explorer",
+          url: "#",
+        },
+        {
+          title: "Quantum",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Listas",
+      url: "#",
+      icon: ScrollText,
+      items: [
+        {
+          title: "Google dorks",
+          url: "#",
+        },
+        {
+          title: "XSS",
+          url: "#",
+        },
+        {
+          title: "403 BYPASS",
+          url: "#",
+        },
+        {
+          title: "SQLi",
+          url: "#",
+        },
+        {
+          title: "LFI",
+          url: "#",
+        },
+        {
+          title: "RCE",
+          url: "#",
+        },
+        {
+          title: "XXE",
+          url: "#",
+        },
+        {
+          title: "SSRF",
+          url: "#",
+        },
+        {
+          title: "SSTI",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Encoder/Decoder",
+      url: "/encoder-decoder",
+      icon: Pi,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
+    },
+  ],
+
+  teste: [
     {
       name: "Gerador de payloads",
       url: "/payload-generator",
@@ -98,7 +189,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain />
-        <NavProjects projects={data.projects} />
+        <NavProjects items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
         <ThemeSwitcher />
