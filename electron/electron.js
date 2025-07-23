@@ -9,6 +9,7 @@ function createWindow() {
     height: 650,
     autoHideMenuBar: true,
     resizable: true,
+    icon: path.resolve(__dirname, 'public/logo3.ico'),
     frame: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
