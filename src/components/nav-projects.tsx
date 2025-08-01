@@ -1,31 +1,19 @@
 import {
   ChevronRight,
   CodeXml,
-  Folder,
-  Forward,
-  MoreHorizontal,
-  Trash2,
+  Pi,
   type LucideIcon,
 } from "lucide-react";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 
@@ -52,6 +40,13 @@ export function NavProjects({
             <SidebarMenuSubButton asChild>
               <a href="/payload-generator">
                 <CodeXml/><span>Gerador de payloads</span>
+              </a>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem key="encoder-decoder">
+            <SidebarMenuSubButton asChild>
+              <a href="/encoder-decoder">
+                <Pi/><span>Encoder/Decoder</span>
               </a>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>

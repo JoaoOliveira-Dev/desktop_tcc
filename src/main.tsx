@@ -11,6 +11,7 @@ import ApiTester from "./pages/api";
 import MeusProjetos from "./pages/myProjects";
 import PayloadGenerator from "./pages/payloadGenerator";
 import EncoderDecoder from "./pages/encoderDecorder";
+import XSSPage from "./pages/xss";
 
 const App = () => (
   <SidebarProvider>
@@ -24,6 +25,7 @@ const App = () => (
         <Route path="*" element={<NotFound />} />
         <Route path="/payload-generator" element={<PayloadGenerator />} />
         <Route path="/encoder-decoder" element={<EncoderDecoder />} />
+        <Route path="/xss" element={<XSSPage />} />
       </Routes>
     </SidebarInset>
   </SidebarProvider>

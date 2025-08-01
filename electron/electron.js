@@ -1,7 +1,9 @@
 const path = require("path");
+const fs = require('fs');
 const { app, BrowserWindow } = require("electron");
 
 const isDev = process.env.IS_DEV == "true" ? true : false;
+const xss_alert = fs.readFileSync(path.join(__dirname, '/src/utils/xss/xss_alert.txt'), 'utf-8').split('\n');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({

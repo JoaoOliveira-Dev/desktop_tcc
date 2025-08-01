@@ -100,6 +100,10 @@ const data = {
         },
         {
           title: "XSS",
+          url: "/xss",
+        },
+        {
+          title: "Click Jacking",
           url: "#",
         },
         {
@@ -128,29 +132,6 @@ const data = {
         },
         {
           title: "SSTI",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Encoder/Decoder",
-      url: "/encoder-decoder",
-      icon: Pi,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
           url: "#",
         },
       ],
