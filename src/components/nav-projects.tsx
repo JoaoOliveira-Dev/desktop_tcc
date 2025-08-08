@@ -1,6 +1,8 @@
 import {
   ChevronRight,
   CodeXml,
+  GitPullRequestArrow,
+  NotebookPen,
   Pi,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +40,13 @@ export function NavProjects({
       <SidebarMenu>
           <SidebarMenuSubItem key="gerador-payloads">
             <SidebarMenuSubButton asChild>
+              <a href="/notes">
+                <NotebookPen/><span>Anotação</span>
+              </a>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem key="gerador-payloads">
+            <SidebarMenuSubButton asChild>
               <a href="/payload-generator">
                 <CodeXml/><span>Gerador de payloads</span>
               </a>
@@ -47,6 +56,13 @@ export function NavProjects({
             <SidebarMenuSubButton asChild>
               <a href="/encoder-decoder">
                 <Pi/><span>Encoder/Decoder</span>
+              </a>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem key="encoder-decoder">
+            <SidebarMenuSubButton asChild>
+              <a href="/api">
+                <GitPullRequestArrow/><span>API's de testes</span>
               </a>
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>

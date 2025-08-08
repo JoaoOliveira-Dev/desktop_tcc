@@ -70,25 +70,7 @@ const data = {
     },
   ],
   navMain: [
-    {
-      title: "API's de testes",
-      url: "/api",
-      icon: GitPullRequestArrow,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
+
     {
       title: "Listas",
       url: "#",
@@ -125,6 +107,10 @@ const data = {
         {
           title: "RCE",
           url: "#",
+        },
+        {
+          title: "Subdomain Takeover",
+          url: "/subdomain-takeover",
         },
         {
           title: "XXE",

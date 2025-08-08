@@ -1,0 +1,50 @@
+1. Descubra os subdomínios
+Use ferramentas como:
+
+subfinder
+amass
+assetfinder
+crt.sh
+dnsdumpster.com
+
+Exemplo:
+
+
+subfinder -d example.com -o subdomains.txt
+2. Resolva os subdomínios para ver quais ainda respondem
+
+dnsx -l subdomains.txt -a -cname -o resolved.txt
+3. Verifique subdomínios que apontam para serviços externos (CNAME)
+Exemplo de saída do DNS:
+
+blog.example.com CNAME blog.example.com.herokudns.com
+➡ Isso indica que o subdomínio usa Heroku.
+
+4. Verifique a resposta HTTP
+Você pode usar ferramentas como:
+
+httpx
+nuclei
+Manualmente via navegador ou curl
+
+Com httpx:
+
+httpx -l resolved.txt -title -status-code -web-server -content-length
+🚨 Sinais de takeover:
+
+404 Not Found ou No such app
+This page is not available
+There is nothing here, yet.
+Repository not found
+The bucket does not exist
+Mensagens típicas do serviço externo
+
+5. Valide com fingerprints
+Use o Nuclei com template de takeover:
+
+nuclei -l resolved.txt -t takeovers/
+(clone os templates: git clone https://github.com/projectdiscovery/nuclei-templates)
+
+ou:
+
+dig CNAME sobdomain.blog.com
