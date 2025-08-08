@@ -14,6 +14,9 @@ import EncoderDecoder from "./pages/encoderDecorder";
 import XSSPage from "./pages/xss";
 import CSRFPage from "./pages/csrf";
 import ClickJackingPage from "./pages/clickJacking";
+import SubdomainTakeoverPage from "./pages/subdomainTakeover";
+import PentestNotes from "./pages/notes";
+
 
 const App = () => (
   <SidebarProvider>
@@ -23,6 +26,7 @@ const App = () => (
         <Route path="/" element={<Dashboard />} />
         <Route path="/my-projects" element={<MeusProjetos />} />
         <Route path="/report" element={<Report />} />
+        <Route path="/notes" element={<PentestNotes />} />
         <Route path="/api" element={<ApiTester />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/payload-generator" element={<PayloadGenerator />} />
@@ -30,6 +34,7 @@ const App = () => (
         <Route path="/xss" element={<XSSPage />} />
         <Route path="/csrf" element={<CSRFPage />} />
         <Route path="/clickjacking" element={<ClickJackingPage />} />
+        <Route path="/subdomain-takeover" element={<SubdomainTakeoverPage />} />
       </Routes>
     </SidebarInset>
   </SidebarProvider>
