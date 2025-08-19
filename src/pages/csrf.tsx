@@ -1,8 +1,4 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Code, Copy } from "lucide-react";
 import { PayloadCard } from "../components/payloadCard";
 
 export default function CSRFPage() {

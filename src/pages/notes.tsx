@@ -137,17 +137,26 @@ export default function PentestNotes() {
   const [newFolderName, setNewFolderName] = useState("");
 
   function handleAddNote() {
-    const newNote: Note = {
-      id: Date.now(),
-      folder,
-      title: title || "Nova Nota",
-      content,
-    };
-    setNotes([...notes, newNote]);
-    setTitle("");
-    setContent("");
+    if (selectedNote) {
+      // Editando nota existente
+      setNotes(
+        notes.map((n) =>
+          n.id === selectedNote.id
+            ? { ...n, title: title || "Nova Nota", content, folder }
+            : n
+        )
+      );
+    } else {
+      // Criando nova nota
+      const newNote: Note = {
+        id: Date.now(),
+        folder,
+        title: title || "Nova Nota",
+        content,
+      };
+      setNotes([...notes, newNote]);
+    }
   }
-
   function handleSelectNote(note: Note) {
     setSelectedNote(note);
     setTitle(note.title);
