@@ -5,19 +5,13 @@ import Store from "electron-store";
 import { fileURLToPath } from "url";
 
 const isDev = process.env.IS_DEV == "true" ? true : false;
-const store = new Store(); // cria um arquivo JSON automático no disco
+const store = new Store();
+
+let projects = []; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const preloadPath = path.join(__dirname, "preload.js");
-
-console.log("-----------------------------------------");
-console.log("DIAGNÓSTICO DE CAMINHO DO PRELOAD:");
-console.log(`[1] __dirname resolvido para: ${__dirname}`);
-console.log(`[2] Caminho completo do preload calculado: ${preloadPath}`);
-console.log(`[3] O arquivo preload existe nesse caminho? -> ${fs.existsSync(preloadPath)}`);
-console.log("-----------------------------------------");
-
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -50,16 +44,26 @@ function createWindow() {
   }
 }
 
-ipcMain.handle("get-projects", () => {
-  return store.get("projects", []);
-});
-
-ipcMain.handle("save-project", (_, project) => {
-  const projects = store.get("projects", []);
-  projects.push(project);
-  store.set("projects", projects);
+ipcMain.handle("get-projects", async () => {
   return projects;
 });
+
+ipcMain.handle("save-project", async (_, project) => {
+  const newProject = { id: Date.now(), ...project };
+  projects.push(newProject);
+  return projects;
+});
+
+ipcMain.handle("edit-project", async (_, id, data) => {
+  projects = projects.map((p) => (p.id === id ? { ...p, ...data } : p));
+  return projects;
+});
+
+ipcMain.handle("delete-project", async (_, id) => {
+  projects = projects.filter((p) => p.id !== id);
+  return projects;
+});
+
 
 app.whenReady().then(async() => {
   createWindow();

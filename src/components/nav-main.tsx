@@ -50,7 +50,6 @@ export function NavMain() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectName, setProjectName] = useState("");
 
-
   useEffect(() => {
     window.electron.getProjects().then(setProjects);
   }, []);
@@ -72,7 +71,6 @@ export function NavMain() {
     // Limpa o campo de input e fecha o dialog
     setProjectName("");
   };
-
 
   return (
     <SidebarGroup>
@@ -153,6 +151,67 @@ export function NavMain() {
 
               <CollapsibleContent>
                 <SidebarMenuSub>
+                  {/* Botão Editar */}
+                  <SidebarMenuSubItem>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <SidebarMenuSubButton>✏️ Editar</SidebarMenuSubButton>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md text-white">
+                        <DialogHeader>
+                          <DialogTitle>Editar projeto</DialogTitle>
+                        </DialogHeader>
+                        <Input
+                          defaultValue={project.name}
+                          onChange={(e) =>
+                            setProjects((prev) =>
+                              prev.map((p) =>
+                                p.id === project.id
+                                  ? { ...p, name: e.target.value }
+                                  : p
+                              )
+                            )
+                          }
+                          className="text-white"
+                        />
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button
+                              onClick={async () => {
+                                const updatedProjects =
+                                  await window.electron.editProject(
+                                    project.id,
+                                    {
+                                      name: projects.find(
+                                        (p) => p.id === project.id
+                                      )?.name,
+                                    }
+                                  );
+                                setProjects(updatedProjects);
+                              }}
+                            >
+                              Salvar
+                            </Button>
+                          </DialogClose>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </SidebarMenuSubItem>
+
+                  {/* Botão Deletar */}
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      onClick={async () => {
+                        const updatedProjects =
+                          await window.electron.deleteProject(project.id);
+                        setProjects(updatedProjects);
+                      }}
+                    >
+                      🗑️ Deletar
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+
+                  {/* Links do projeto */}
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
                       <a href={`/report`}>
