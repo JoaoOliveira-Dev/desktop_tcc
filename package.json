@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "main": "electron/electron.js",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -37,6 +38,7 @@
     "cmdk": "^1.0.0",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
+    "electron-store": "^10.1.0",
     "lucide-react": "^0.475.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

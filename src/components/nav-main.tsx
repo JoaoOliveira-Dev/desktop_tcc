@@ -38,7 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Tipagem do projeto
 type Project = {
@@ -50,17 +50,29 @@ export function NavMain() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectName, setProjectName] = useState("");
 
-  const handleCreateProject = () => {
-    if (!projectName.trim()) return;
+
+  useEffect(() => {
+    window.electron.getProjects().then(setProjects);
+  }, []);
+
+  const handleCreateProject = async () => {
+    if (!projectName.trim()) return; // Não salva se o nome estiver vazio
 
     const newProject: Project = {
-      id: Date.now(), // ID único baseado em timestamp
+      id: Date.now(), // Gera um ID único baseado no tempo atual
       name: projectName.trim(),
     };
 
-    setProjects((prev) => [...prev, newProject]);
-    setProjectName(""); // limpar campo
+    // Chama a função do backend via preload
+    const updatedProjects = await window.electron.saveProject(newProject);
+
+    // Atualiza o estado do frontend com a lista retornada pelo backend
+    setProjects(updatedProjects);
+
+    // Limpa o campo de input e fecha o dialog
+    setProjectName("");
   };
+
 
   return (
     <SidebarGroup>
