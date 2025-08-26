@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Iframe Tela Inteira</title>
+<style>
+body {
+  margin: 0; /* Remove a margem padrão do body */
+  overflow: hidden; /* Evita barras de rolagem na página */
+}
+html, body {
+  height: 100%; /* Garante 100% de altura para html e body */
+}
+.full-screen-iframe {
+  width: 100vw; /* Ocupa 100% da largura da janela de visualização */
+  height: 100vh; /* Ocupa 100% da altura da janela de visualização */
+  border: none; /* Remove a borda do iframe */
+  margin: 0; /* Remove margens */
+  padding: 0; /* Remove preenchimento */
+  display: block; /* Garante que o iframe não tenha espaços extras */
+}
+</style>
+</head>
+<body>
+
+<iframe src="http://testphp.vulnweb.com/login.php" class="full-screen-iframe" allowfullscreen></iframe>
+
+</body>
+</html>
