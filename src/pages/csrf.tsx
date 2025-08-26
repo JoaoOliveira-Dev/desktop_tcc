@@ -5,6 +5,7 @@ export default function CSRFPage() {
   const [csrfForms, setCsrfForms] = useState("");
   const [csrfScript, setCsrfScript] = useState("");
   const [csrfIframe, setCsrfIframe] = useState("");
+  const [csrfInv, setCsrfInv] = useState("");
 
   useEffect(() => {
     fetch("/csrf/csrf_forms.txt")
@@ -18,6 +19,10 @@ export default function CSRFPage() {
     fetch("/csrf/csrf_iframe.txt")
       .then((res) => res.text())
       .then((text) => setCsrfIframe(text));
+
+    fetch("/csrf/csrf_inv.txt")
+    .then((res) => res.text())
+    .then((text) => setCsrfInv(text));  
   }, []);
 
   return (
@@ -26,6 +31,7 @@ export default function CSRFPage() {
         <PayloadCard title="CSRF_FORMS()" payload={csrfForms} />
         <PayloadCard title="CSRF_SCRIPT()" payload={csrfScript} />
         <PayloadCard title="CSRF_Iframe()" payload={csrfIframe} />
+        <PayloadCard title="CSRF_INV()" payload={csrfInv} />
       </div>
     </div>
   );

