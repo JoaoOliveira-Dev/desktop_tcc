@@ -81,6 +81,10 @@ const data = {
           url: "#",
         },
         {
+          title: "Links",
+          url: "#",
+        },
+        {
           title: "XSS",
           url: "/xss",
         },
@@ -94,7 +98,7 @@ const data = {
         },
         {
           title: "403 BYPASS",
-          url: "#",
+          url: "/forbiden-bypass",
         },
         {
           title: "SQLi",

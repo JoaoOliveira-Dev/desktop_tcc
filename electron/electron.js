@@ -1,25 +1,65 @@
-import path from "path";
-import fs from "fs";
-import { app, BrowserWindow, ipcMain, shell } from "electron";
-import Store from "electron-store";
-import { fileURLToPath } from "url";
+const path = require("path");
+const fs = require("fs");
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const sqlite3 = require("sqlite3").verbose();
 
-const isDev = process.env.IS_DEV == "true" ? true : false;
-const store = new Store();
+const isDev = process.env.IS_DEV === "true";
 
-let projects = []; 
+let db; // conexão com sqlite
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const preloadPath = path.join(__dirname, "preload.js");
+// Inicializa o banco
+function initDatabase() {
+  const dbPath = path.join(app.getPath("userData"), "appdata.sqlite");
+  db = new sqlite3.Database(dbPath);
+
+  db.serialize(() => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS projects (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS notes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT,
+          content TEXT,
+          project_id INTEGER NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      );
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS api_tests (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          request_method TEXT,
+          url TEXT,
+          headers TEXT,
+          body TEXT,
+          response TEXT,
+          project_id INTEGER NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      );
+    `);
+  });
+}
 
 function createWindow() {
+  const preloadPath = path.join(__dirname, "preload.js");
+
   const mainWindow = new BrowserWindow({
     width: 1024,
     height: 650,
     autoHideMenuBar: true,
     resizable: true,
-    icon: path.resolve(__dirname, 'public/logo3.ico'),
+    icon: path.resolve(__dirname, "../public/logo3.ico"),
     frame: true,
     webPreferences: {
       preload: preloadPath,
@@ -38,36 +78,152 @@ function createWindow() {
       ? "http://localhost:3000"
       : `file://${path.join(__dirname, "../dist/index.html")}`
   );
-  // Open the DevTools.
+
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }
 }
 
-ipcMain.handle("get-projects", async () => {
-  return projects;
+//
+// CRUD PROJECTS
+//
+ipcMain.handle("get-projects", () => {
+  return new Promise((resolve, reject) => {
+    db.all("SELECT * FROM projects", (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
 });
 
-ipcMain.handle("save-project", async (_, project) => {
-  const newProject = { id: Date.now(), ...project };
-  projects.push(newProject);
-  return projects;
+ipcMain.handle("save-project", (event, project) => {
+  return new Promise((resolve, reject) => {
+    db.run("INSERT INTO projects (name) VALUES (?)", [project.name], function (err) {
+      if (err) reject(err);
+      else {
+        db.all("SELECT * FROM projects", (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      }
+    });
+  });
 });
 
-ipcMain.handle("edit-project", async (_, id, data) => {
-  projects = projects.map((p) => (p.id === id ? { ...p, ...data } : p));
-  return projects;
+ipcMain.handle("edit-project", (event, { id, name }) => {
+  return new Promise((resolve, reject) => {
+    db.run("UPDATE projects SET name = ? WHERE id = ?", [name, id], function (err) {
+      if (err) reject(err);
+      else {
+        db.all("SELECT * FROM projects", (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      }
+    });
+  });
 });
 
-ipcMain.handle("delete-project", async (_, id) => {
-  projects = projects.filter((p) => p.id !== id);
-  return projects;
+ipcMain.handle("delete-project", (event, id) => {
+  return new Promise((resolve, reject) => {
+    db.run("DELETE FROM projects WHERE id = ?", [id], function (err) {
+      if (err) reject(err);
+      else {
+        db.all("SELECT * FROM projects", (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      }
+    });
+  });
 });
 
+//
+// CRUD NOTES
+//
+ipcMain.handle("get-notes", (event, projectId) => {
+  return new Promise((resolve, reject) => {
+    if (projectId) {
+      db.all("SELECT * FROM notes WHERE project_id = ?", [projectId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    } else {
+      db.all("SELECT * FROM notes WHERE project_id IS NULL", (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    }
+  });
+});
 
-app.whenReady().then(async() => {
+ipcMain.handle("get-notes-null", () => {
+  return new Promise((resolve, reject) => {
+    db.all("SELECT * FROM notes WHERE project_id IS NULL", (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+});
+
+ipcMain.handle("save-note", (event, note) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "INSERT INTO notes (folder, title, content) VALUES (?, ?, ?)",
+      [note.folder, note.title, note.content],
+      function (err) {
+        if (err) reject(err);
+        else {
+          db.all("SELECT * FROM notes", (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
+        }
+      }
+    );
+  });
+});
+
+ipcMain.handle("edit-note", (event, { id, folder, title, content }) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      "UPDATE notes SET folder = ?, title = ?, content = ? WHERE id = ?",
+      [folder, title, content, id],
+      function (err) {
+        if (err) reject(err);
+        else {
+          db.all("SELECT * FROM notes", (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
+        }
+      }
+    );
+  });
+});
+
+ipcMain.handle("delete-note", (event, id) => {
+  return new Promise((resolve, reject) => {
+    db.run("DELETE FROM notes WHERE id = ?", [id], function (err) {
+      if (err) reject(err);
+      else {
+        db.all("SELECT * FROM notes", (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      }
+    });
+  });
+});
+
+//
+// App lifecycle
+//
+app.whenReady().then(() => {
+  initDatabase();
   createWindow();
-  app.on("activate", function () {
+
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });

@@ -6,6 +6,8 @@ import {
   Network,
   Plus,
   Home,
+  Trash2,
+  BadgeIcon,
 } from "lucide-react";
 
 import {
@@ -155,7 +157,7 @@ export function NavMain() {
                   <SidebarMenuSubItem>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <SidebarMenuSubButton>✏️ Editar</SidebarMenuSubButton>
+                        <SidebarMenuSubButton><BadgeIcon size={16}/> Editar</SidebarMenuSubButton>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-md text-white">
                         <DialogHeader>
@@ -207,7 +209,7 @@ export function NavMain() {
                         setProjects(updatedProjects);
                       }}
                     >
-                      🗑️ Deletar
+                      <Trash2 size={16}/> Deletar
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
 
@@ -223,7 +225,7 @@ export function NavMain() {
 
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <a href={`/api`}>
+                      <a href={`/api/${project.id}`}>
                         <Network size={16} className="mr-2" />
                         Testes de API
                       </a>
@@ -232,7 +234,7 @@ export function NavMain() {
 
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <a href={`/projects/${project.id}/notes`}>
+                      <a href={`/notes/${project.id}`}>
                         <NotebookPen size={16} className="mr-2" />
                         Notas
                       </a>

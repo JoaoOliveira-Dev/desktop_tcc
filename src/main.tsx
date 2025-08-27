@@ -16,6 +16,7 @@ import CSRFPage from "./pages/csrf";
 import ClickJackingPage from "./pages/clickJacking";
 import SubdomainTakeoverPage from "./pages/subdomainTakeover";
 import PentestNotes from "./pages/notes";
+import ForbidenBypassPage from "./pages/forbidenBypass";
 
 
 const App = () => (
@@ -26,15 +27,22 @@ const App = () => (
         <Route path="/" element={<Dashboard />} />
         <Route path="/my-projects" element={<MeusProjetos />} />
         <Route path="/report" element={<Report />} />
+
         <Route path="/notes" element={<PentestNotes />} />
+        <Route path="/notes/:projectId" element={<PentestNotes />} />
+
         <Route path="/api" element={<ApiTester />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="/api/:projectId" element={<ApiTester />} />
+
         <Route path="/payload-generator" element={<PayloadGenerator />} />
         <Route path="/encoder-decoder" element={<EncoderDecoder />} />
         <Route path="/xss" element={<XSSPage />} />
         <Route path="/csrf" element={<CSRFPage />} />
         <Route path="/clickjacking" element={<ClickJackingPage />} />
         <Route path="/subdomain-takeover" element={<SubdomainTakeoverPage />} />
+        <Route path="/forbiden-bypass" element={<ForbidenBypassPage />} />
+        
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </SidebarInset>
   </SidebarProvider>
