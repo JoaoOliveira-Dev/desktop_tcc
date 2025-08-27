@@ -24,9 +24,10 @@ function initDatabase() {
     db.run(`
       CREATE TABLE IF NOT EXISTS notes (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT,
-          content TEXT,
-          project_id INTEGER NULL,
+          folder TEXT,                
+          title TEXT NOT NULL,        
+          content TEXT,               
+          project_id INTEGER NULL,    
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
@@ -141,77 +142,56 @@ ipcMain.handle("delete-project", (event, id) => {
 //
 // CRUD NOTES
 //
-ipcMain.handle("get-notes", (event, projectId) => {
-  return new Promise((resolve, reject) => {
-    if (projectId) {
-      db.all("SELECT * FROM notes WHERE project_id = ?", [projectId], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    } else {
-      db.all("SELECT * FROM notes WHERE project_id IS NULL", (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    }
-  });
-});
 
-ipcMain.handle("get-notes-null", () => {
-  return new Promise((resolve, reject) => {
-    db.all("SELECT * FROM notes WHERE project_id IS NULL", (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
-});
+// Criar nota
+ipcMain.handle("create-note", async (_, note) => {
 
-ipcMain.handle("save-note", (event, note) => {
   return new Promise((resolve, reject) => {
     db.run(
-      "INSERT INTO notes (folder, title, content) VALUES (?, ?, ?)",
-      [note.folder, note.title, note.content],
+      `INSERT INTO notes (project_id, folder, title, content) VALUES (?, ?, ?, ?)`,
+      [note.project_id, note.folder, note.title, note.content],
       function (err) {
         if (err) reject(err);
-        else {
-          db.all("SELECT * FROM notes", (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-          });
-        }
+        else resolve({ id: this.lastID, ...note });
       }
     );
   });
 });
 
-ipcMain.handle("edit-note", (event, { id, folder, title, content }) => {
+// Listar notas por projeto
+ipcMain.handle("get-notes", async (_, projectId) => {
   return new Promise((resolve, reject) => {
-    db.run(
-      "UPDATE notes SET folder = ?, title = ?, content = ? WHERE id = ?",
-      [folder, title, content, id],
-      function (err) {
+    db.all(
+      `SELECT * FROM notes WHERE project_id = ? ORDER BY created_at DESC`,
+      [projectId],
+      (err, rows) => {
         if (err) reject(err);
-        else {
-          db.all("SELECT * FROM notes", (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-          });
-        }
+        else resolve(rows);
       }
     );
   });
 });
 
-ipcMain.handle("delete-note", (event, id) => {
+// Atualizar nota
+ipcMain.handle("update-note", async (_, note) => {
   return new Promise((resolve, reject) => {
-    db.run("DELETE FROM notes WHERE id = ?", [id], function (err) {
-      if (err) reject(err);
-      else {
-        db.all("SELECT * FROM notes", (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        });
+    db.run(
+      `UPDATE notes SET folder = ?, title = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      [note.folder, note.title, note.content, note.id],
+      function (err) {
+        if (err) reject(err);
+        else resolve(note);
       }
+    );
+  });
+});
+
+// Deletar nota
+ipcMain.handle("delete-note", async (_, id) => {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM notes WHERE id = ?`, [id], function (err) {
+      if (err) reject(err);
+      else resolve(true);
     });
   });
 });

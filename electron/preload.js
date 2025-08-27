@@ -13,10 +13,9 @@ contextBridge.exposeInMainWorld("electron", {
   deleteProject: (id) => ipcRenderer.invoke("delete-project", id),
 
   // Notes
-  getNotes: () => ipcRenderer.invoke("get-notes"),
-  getNotesNull: () => ipcRenderer.invoke("get-notes-null"),
-  saveNote: (note) => ipcRenderer.invoke("save-note", note),
-  editNote: (id, data) => ipcRenderer.invoke("edit-note", id, data),
+  getNotes: (projectId) => ipcRenderer.invoke("get-notes", projectId),
+  createNote: (note) => ipcRenderer.invoke("create-note", note),
+  updateNote: (note) => ipcRenderer.invoke("update-note", note),
   deleteNote: (id) => ipcRenderer.invoke("delete-note", id),
   versions: versions,
 });
