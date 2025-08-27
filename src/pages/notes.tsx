@@ -84,7 +84,11 @@ export default function PentestNotes() {
     const result = await window.electron.getNotes(
       projectId ? Number(projectId) : null
     );
+
+    if (result)
     setNotes(result);
+
+    console.log("Fetched notes:", result);
   }
 
   async function handleSaveNote() {
@@ -103,7 +107,7 @@ export default function PentestNotes() {
     } else {
       const newNote = await window.electron.createNote({
         project_id: Number(projectId),
-        title: debouncedTitle || "Nova Nota", // Garante um título padrão
+        title: debouncedTitle || "Nova Nota",
         content: debouncedContent,
         folder,
       });
@@ -111,7 +115,6 @@ export default function PentestNotes() {
       if (newNote) {
         setSelectedNote(newNote);
 
-        // Adiciona a nova nota à lista
         setNotes((prevNotes) => [newNote, ...prevNotes]);
       }
     }
