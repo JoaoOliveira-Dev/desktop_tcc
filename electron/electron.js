@@ -146,6 +146,12 @@ ipcMain.handle("delete-project", (event, id) => {
 // Criar nota
 ipcMain.handle("create-note", async (_, note) => {
 
+  if (!note.project_id) {
+    note.project_id = null;
+  }
+
+  console.log("Creating note:", note);
+
   return new Promise((resolve, reject) => {
     db.run(
       `INSERT INTO notes (project_id, folder, title, content) VALUES (?, ?, ?, ?)`,
@@ -160,15 +166,27 @@ ipcMain.handle("create-note", async (_, note) => {
 
 // Listar notas por projeto
 ipcMain.handle("get-notes", async (_, projectId) => {
+  const targetProjectId = projectId || null;
+
+  console.log("Fetching notes for projectId:", targetProjectId);
+
+  const query = `
+    SELECT * FROM notes 
+    WHERE ${targetProjectId === null ? 'project_id IS NULL' : 'project_id = ?'}
+    ORDER BY created_at DESC
+  `;
+
+  const params = targetProjectId === null ? [] : [targetProjectId];
+
   return new Promise((resolve, reject) => {
-    db.all(
-      `SELECT * FROM notes WHERE project_id = ? ORDER BY created_at DESC`,
-      [projectId],
-      (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        console.error("Database error:", err.message);
+        reject(err);
+      } else {
+        resolve(rows);
       }
-    );
+    });
   });
 });
 
