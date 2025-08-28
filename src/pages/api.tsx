@@ -274,11 +274,11 @@ export default function ApiTester() {
                     >
                       <SelectTrigger
                         className={`w-[120px] ${
-                          method === "GET"
+                          tab.method === "GET"
                             ? "text-green-600"
-                            : method === "POST"
+                            : tab.method === "POST"
                             ? "text-orange-500"
-                            : method === "PUT"
+                            : tab.method === "PUT"
                             ? "text-blue-500"
                             : "text-red-500"
                         }`}
