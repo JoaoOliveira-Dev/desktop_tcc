@@ -240,7 +240,7 @@ export default function PentestNotes() {
           </SelectContent>
         </Select>
         <textarea
-          className="w-full h-[65vh] bg-[#0f1720] p-3 rounded text-sm text-white"
+          className="w-full h-[65vh] bg-[#0f1720] p-3 rounded text-sm text-white focus:ring-0 focus:outline-none"
           placeholder="Conteúdo da nota"
           value={content}
           onChange={(e) => setContent(e.target.value)}
