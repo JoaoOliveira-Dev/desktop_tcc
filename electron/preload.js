@@ -17,5 +17,11 @@ contextBridge.exposeInMainWorld("electron", {
   createNote: (note) => ipcRenderer.invoke("create-note", note),
   updateNote: (note) => ipcRenderer.invoke("update-note", note),
   deleteNote: (id) => ipcRenderer.invoke("delete-note", id),
+
+  // API Tabs
+  getApiTabs: (projectId) => ipcRenderer.invoke("get-api-tabs", projectId),
+  createApiTab: (tab) => ipcRenderer.invoke("create-api-tab", tab),
+  updateApiTab: (tab) => ipcRenderer.invoke("update-api-tab", tab),
+  deleteApiTab: (id) => ipcRenderer.invoke("delete-api-tab", id),
   versions: versions,
 });

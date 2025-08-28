@@ -85,6 +85,8 @@ export default function PentestNotes() {
       projectId ? Number(projectId) : null
     );
 
+    setNotes(result || []);
+
     console.log("Fetched notes:", result);
   }
 

@@ -35,18 +35,15 @@ function initDatabase() {
     `);
 
     db.run(`
-      CREATE TABLE IF NOT EXISTS api_tests (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          request_method TEXT,
-          url TEXT,
-          headers TEXT,
-          body TEXT,
-          response TEXT,
-          project_id INTEGER NULL,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      CREATE TABLE IF NOT EXISTS api_tabs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NULL,
+        name TEXT NOT NULL,
+        method TEXT DEFAULT 'GET',
+        url TEXT DEFAULT '',
+        headers TEXT DEFAULT '',
+        body TEXT DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
   });
@@ -168,8 +165,6 @@ ipcMain.handle("create-note", async (_, note) => {
 ipcMain.handle("get-notes", async (_, projectId) => {
   const targetProjectId = projectId || null;
 
-  console.log("Fetching notes for projectId:", targetProjectId);
-
   const query = `
     SELECT * FROM notes 
     WHERE ${targetProjectId === null ? 'project_id IS NULL' : 'project_id = ?'}
@@ -213,6 +208,103 @@ ipcMain.handle("delete-note", async (_, id) => {
     });
   });
 });
+
+//
+// CRUD API TABS
+//
+
+// Criar tab de API
+ipcMain.handle("create-api-tab", async (_, tab) => {
+  if (!tab.project_id) {
+    tab.project_id = null;
+  }
+
+  console.log("Creating API Tab:", tab);
+
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO api_tabs (project_id, name, method, url, headers, body) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        tab.project_id,
+        tab.name,
+        tab.method,
+        tab.url,
+        tab.headers ? JSON.stringify(tab.headers) : null,
+        tab.body || null,
+      ],
+      function (err) {
+        if (err) reject(err);
+        else resolve({ id: this.lastID, ...tab });
+      }
+    );
+  });
+});
+
+// Listar tabs por projeto
+ipcMain.handle("get-api-tabs", async (_, projectId) => {
+  const targetProjectId = projectId || null;
+
+  console.log("Fetching API Tabs for projectId:", targetProjectId);
+
+  const query = `
+    SELECT * FROM api_tabs 
+    WHERE ${targetProjectId === null ? "project_id IS NULL" : "project_id = ?"}
+    ORDER BY created_at DESC
+  `;
+
+  const params = targetProjectId === null ? [] : [targetProjectId];
+
+  return new Promise((resolve, reject) => {
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        console.error("Database error:", err.message);
+        reject(err);
+      } else {
+        // Parse headers JSON
+        rows = rows.map((row) => ({
+          ...row,
+          headers: row.headers ? JSON.parse(row.headers) : null,
+        }));
+        resolve(rows);
+      }
+    });
+  });
+});
+
+// Atualizar tab
+ipcMain.handle("update-api-tab", async (_, tab) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE api_tabs 
+       SET name = ?, method = ?, url = ?, headers = ?, body = ? 
+       WHERE id = ?`,
+      [
+        tab.name,
+        tab.method,
+        tab.url,
+        tab.headers ? JSON.stringify(tab.headers) : null,
+        tab.body || null,
+        tab.id,
+      ],
+      function (err) {
+        if (err) reject(err);
+        else resolve(tab);
+      }
+    );
+  });
+});
+
+// Deletar tab
+ipcMain.handle("delete-api-tab", async (_, id) => {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM api_tabs WHERE id = ?`, [id], function (err) {
+      if (err) reject(err);
+      else resolve(true);
+    });
+  });
+});
+
 
 //
 // App lifecycle

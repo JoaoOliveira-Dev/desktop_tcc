@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -23,7 +24,8 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { AlertCircle, CheckCircle } from "lucide-react"; // Ícones do Lucide
+import { AlertCircle, CheckCircle, X } from "lucide-react"; // Ícones do Lucide
+import { useParams } from "react-router";
 
 // Tipagem para os estados da aplicação
 interface ApiResponse {
@@ -32,7 +34,21 @@ interface ApiResponse {
   body: string;
 }
 
+interface ApiTab {
+  id: number;
+  project_id: number | null;
+  name: string;
+  method: string;
+  url: string;
+  headers: string;
+  body: string;
+}
+
 export default function ApiTester() {
+  const { projectId } = useParams();
+  const [tabs, setTabs] = useState<ApiTab[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("");
+
   const [url, setUrl] = useState<string>("");
   const [method, setMethod] = useState<string>("GET");
   const [rawHeaders, setRawHeaders] = useState<string>(""); // Cabeçalhos no formato "chave: valor"
@@ -40,6 +56,50 @@ export default function ApiTester() {
   const [response, setResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    const fetchTabs = async () => {
+      const result = await window.electron.getApiTabs(
+        projectId ? Number(projectId) : null
+      );
+      setTabs(result);
+      if (result.length > 0) setActiveTab(String(result[0].id));
+    };
+    fetchTabs();
+  }, [projectId]);
+
+  async function createNewTab() {
+    setResponse(null);
+
+    const newTab = await window.electron.createApiTab({
+      project_id: projectId ? Number(projectId) : null,
+      name: "Nova Aba",
+      method: "GET",
+      url: "",
+      headers: "",
+      body: "",
+    });
+    setTabs((prev) => [...prev, newTab]);
+    setActiveTab(String(newTab.id));
+  }
+
+  async function renameTab(id: number, newName: string) {
+    const tab = tabs.find((t) => t.id === id);
+    if (!tab) return;
+    const updated = await window.electron.updateApiTab({
+      ...tab,
+      name: newName,
+    });
+    setTabs((prev) => prev.map((t) => (t.id === id ? updated : t)));
+  }
+
+  async function deleteTab(id: number) {
+    await window.electron.deleteApiTab(id);
+    setTabs((prev) => prev.filter((t) => t.id !== id));
+    if (String(id) === activeTab && tabs.length > 0) {
+      setActiveTab(String(tabs[0].id));
+    }
+  }
 
   // Função para converter cabeçalhos no formato "chave: valor" para objeto
   const parseHeaders = (rawHeaders: string): Record<string, string> => {
@@ -93,8 +153,8 @@ export default function ApiTester() {
     );
   };
 
-  const handleFetch = async () => {
-    if (!url) {
+  const handleFetch = async (tab: ApiTab) => {
+    if (!tab.url) {
       setError("Por favor, insira uma URL válida.");
       return;
     }
@@ -105,27 +165,30 @@ export default function ApiTester() {
 
     try {
       // Parse dos cabeçalhos e do corpo
-      const parsedHeaders = parseHeaders(rawHeaders);
-      const parsedBody = method !== "GET" ? parseBody(rawBody) : undefined;
+      const parsedHeaders = parseHeaders(tab.headers || "");
+      const parsedBody =
+        tab.method !== "GET" ? parseBody(tab.body || "") : undefined;
 
       // Configuração da solicitação
       const requestOptions: RequestInit = {
-        method: method,
+        method: tab.method,
         headers: {
           // Inclui Content-Type apenas para métodos com corpo
-          ...(["POST", "PUT"].includes(method) && {
+          ...(["POST", "PUT"].includes(tab.method) && {
             "Content-Type": "application/json",
           }),
           ...parsedHeaders,
         },
-        body: ["POST", "PUT"].includes(method)
+        body: ["POST", "PUT"].includes(tab.method)
           ? JSON.stringify(parsedBody)
           : undefined,
       };
 
-      // Fazendo a solicitação com um proxy alternativo
+      // Fazendo a solicitação com proxy
       const proxyUrl = "https://api.allorigins.win/raw?url=";
-      const fullUrl = url.startsWith("http") ? url : `http://${url}`;
+      const fullUrl = tab.url.startsWith("http")
+        ? tab.url
+        : `http://${tab.url}`;
 
       const res = await fetch(
         proxyUrl + encodeURIComponent(fullUrl),
@@ -133,18 +196,17 @@ export default function ApiTester() {
       );
 
       // Extraindo informações da resposta
-      const responseBody = await res.text(); // Captura o corpo da resposta como texto
-      const responseHeaders = Object.fromEntries(res.headers.entries()); // Captura todos os cabeçalhos
-      const responseStatus = res.status; // Captura o código de status HTTP
+      const responseBody = await res.text();
+      const responseHeaders = Object.fromEntries(res.headers.entries());
+      const responseStatus = res.status;
 
-      // Montando a resposta completa
       const fullResponse: ApiResponse = {
         status: responseStatus,
         headers: responseHeaders,
         body: responseBody,
       };
 
-      setResponse(fullResponse); // Atualiza o estado com a resposta completa
+      setResponse(fullResponse);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message || "Ocorreu um erro ao buscar os dados.");
@@ -157,127 +219,186 @@ export default function ApiTester() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen mt-5 mb-5">
-      <Card className="w-full max-w-7xl">
-        <CardHeader>
-          <CardTitle>API Tester</CardTitle>
-          <CardDescription>
-            Teste APIs como no Burp Suite. Configure URL, método, cabeçalhos e
-            corpo da requisição.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Campo de entrada para a URL e método HTTP */}
-            <div className="flex items-center space-x-4">
-              <Select
-                value={method}
-                onValueChange={(value) => setMethod(value)}
+    <div className="flex justify-center items-center mt-5 mb-5">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="h-full mb-3">
+          {tabs.map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={String(tab.id)}
+              onClick={() => setResponse(null)}
+            >
+              <input
+                className="bg-transparent border-none focus:ring-0 focus:outline-none w-20"
+                value={tab.name}
+                onChange={(e) => renameTab(tab.id, e.target.value)}
+              />
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => deleteTab(tab.id)}
               >
-                <SelectTrigger
-                  className={`w-[120px] ${
-                    method === "GET"
-                      ? "text-green-600"
-                      : method === "POST"
-                      ? "text-orange-500"
-                      : method === "PUT"
-                      ? "text-blue-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  <SelectValue placeholder="Método" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="GET">GET</SelectItem>
-                  <SelectItem value="POST">POST</SelectItem>
-                  <SelectItem value="PUT">PUT</SelectItem>
-                  <SelectItem value="DELETE">DELETE</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                type="text"
-                placeholder="Insira a URL da API"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                disabled={loading}
-                className="flex-grow"
-              />
-              <Button onClick={handleFetch} disabled={loading}>
-                {loading ? "Carregando..." : "Enviar"}
+                <X />
               </Button>
-            </div>
-            {/* Cabeçalhos da Requisição */}
-            <Textarea
-              placeholder="Cabeçalhos (chave: valor)\nAuthorization: Bearer token\nContent-Type: application/json"
-              value={rawHeaders}
-              onChange={(e) => setRawHeaders(e.target.value)}
-              rows={6}
-            />
-            {/* Corpo da Requisição */}
-            {["POST", "PUT"].includes(method) && (
-              <Textarea
-                placeholder="Corpo da requisição (chave: valor ou JSON)\n{\n  key: value\n}"
-                value={rawBody}
-                onChange={(e) => setRawBody(e.target.value)}
-                rows={8}
-              />
-            )}
-            {/* Área de exibição da resposta */}
-            {error && (
-              <div className="bg-red-50 border border-red-300 text-red-900 px-4 py-3 rounded relative">
-                <span className="block sm:inline">{error}</span>
-              </div>
-            )}
-            {response && (
-              <div className="space-y-4">
-                {/* Status */}
-                <div className="flex items-center space-x-2">
-                  {response.status >= 200 && response.status < 300 ? (
-                    <CheckCircle className="text-green-500" />
-                  ) : (
-                    <AlertCircle className="text-red-500" />
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <Card className="w-screen max-w-7xl">
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center">
+              API Tester <Button onClick={createNewTab}>+ Nova Aba</Button>
+            </CardTitle>
+            <CardDescription>
+              Teste APIs como no Burp Suite. Configure URL, método, cabeçalhos e
+              corpo da requisição.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {tabs.map((tab) => (
+              <TabsContent key={tab.id} value={String(tab.id)}>
+                {/* FORMULÁRIO DA ABA */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <Select
+                      value={tab.method}
+                      onValueChange={async (value) => {
+                        const updated = await window.electron.updateApiTab({
+                          ...tab,
+                          method: value,
+                        });
+                        setTabs((prev) =>
+                          prev.map((t) => (t.id === tab.id ? updated : t))
+                        );
+                      }}
+                    >
+                      <SelectTrigger
+                        className={`w-[120px] ${
+                          method === "GET"
+                            ? "text-green-600"
+                            : method === "POST"
+                            ? "text-orange-500"
+                            : method === "PUT"
+                            ? "text-blue-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        <SelectValue placeholder="Método" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="GET">GET</SelectItem>
+                        <SelectItem value="POST">POST</SelectItem>
+                        <SelectItem value="PUT">PUT</SelectItem>
+                        <SelectItem value="DELETE">DELETE</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Input
+                      type="text"
+                      placeholder="Insira a URL da API"
+                      value={tab.url}
+                      disabled={loading}
+                      onChange={async (e) => {
+                        const updated = await window.electron.updateApiTab({
+                          ...tab,
+                          url: e.target.value,
+                        });
+                        setTabs((prev) =>
+                          prev.map((t) => (t.id === tab.id ? updated : t))
+                        );
+                      }}
+                    />
+
+                    <Button onClick={() => handleFetch(tab)} disabled={loading}>
+                      {" "}
+                      {loading ? "Carregando..." : "Enviar"}
+                    </Button>
+                  </div>
+
+                  <Textarea
+                    placeholder="Cabeçalhos (chave: valor) \n Authorization: Bearer token \n Content-Type: application/json"
+                    value={tab.headers}
+                    onChange={async (e) => {
+                      const updated = await window.electron.updateApiTab({
+                        ...tab,
+                        headers: e.target.value,
+                      });
+                      setTabs((prev) =>
+                        prev.map((t) => (t.id === tab.id ? updated : t))
+                      );
+                    }}
+                  />
+
+                  {["POST", "PUT"].includes(tab.method) && (
+                    <Textarea
+                      placeholder="Corpo da requisição"
+                      value={tab.body}
+                      onChange={async (e) => {
+                        const updated = await window.electron.updateApiTab({
+                          ...tab,
+                          body: e.target.value,
+                        });
+                        setTabs((prev) =>
+                          prev.map((t) => (t.id === tab.id ? updated : t))
+                        );
+                      }}
+                    />
                   )}
-                  <p className="font-semibold">
-                    Status: {response.status}{" "}
-                    {response.status >= 200 && response.status < 300
-                      ? "(Sucesso)"
-                      : "(Erro)"}
-                  </p>
                 </div>
-                {/* Cabeçalhos da Resposta */}
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="headers">
-                    <AccordionTrigger>Cabeçalhos</AccordionTrigger>
-                    <AccordionContent>
-                      <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
-                        {formatAsKeyValue(response.headers)}
-                      </pre>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-                {/* Corpo da Resposta */}
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="body">
-                    <AccordionTrigger>Corpo</AccordionTrigger>
-                    <AccordionContent>
-                      {isHtml(response.body) ? (
-                        <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
-                          {response.body}
-                        </pre>
+
+                {/* RESPOSTA */}
+                {response && (
+                  <div className="space-y-4">
+                    {/* Status */}
+                    <div className="flex items-center space-x-2 mt-5">
+                      {response.status >= 200 && response.status < 300 ? (
+                        <CheckCircle className="text-green-500" />
                       ) : (
-                        <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
-                          {formatResponseBody(response.body)}
-                        </pre>
+                        <AlertCircle className="text-red-500" />
                       )}
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
-            )}
-          </div>
-        </CardContent>
-        <CardFooter>{/* Botão de envio */}</CardFooter>
-      </Card>
+                      <p className="font-semibold">
+                        Status: {response.status}{" "}
+                        {response.status >= 200 && response.status < 300
+                          ? "(Sucesso)"
+                          : "(Erro)"}
+                      </p>
+                    </div>
+                    {/* Cabeçalhos da Resposta */}
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="headers">
+                        <AccordionTrigger>Cabeçalhos</AccordionTrigger>
+                        <AccordionContent>
+                          <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
+                            {formatAsKeyValue(response.headers)}
+                          </pre>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                    {/* Corpo da Resposta */}
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="body">
+                        <AccordionTrigger>Corpo</AccordionTrigger>
+                        <AccordionContent>
+                          {isHtml(response.body) ? (
+                            <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
+                              {response.body}
+                            </pre>
+                          ) : (
+                            <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
+                              {formatResponseBody(response.body)}
+                            </pre>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </CardContent>
+          <CardFooter>{/* Botão de envio */}</CardFooter>
+        </Card>
+      </Tabs>
     </div>
   );
 }
