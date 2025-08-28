@@ -66,7 +66,7 @@ export default function ApiTester() {
       if (result.length > 0) setActiveTab(String(result[0].id));
     };
     fetchTabs();
-  }, [projectId]);
+  }, []);
 
   async function createNewTab() {
     setResponse(null);
@@ -229,7 +229,7 @@ export default function ApiTester() {
               onClick={() => setResponse(null)}
             >
               <input
-                className="bg-transparent border-none focus:ring-0 focus:outline-none w-20"
+                className="bg-transparent border-none focus:ring-0 focus:outline-none w-24 pr-2"
                 value={tab.name}
                 onChange={(e) => renameTab(tab.id, e.target.value)}
               />
@@ -237,6 +237,7 @@ export default function ApiTester() {
                 size="sm"
                 variant="destructive"
                 onClick={() => deleteTab(tab.id)}
+                className="rounded-full hover:bg-red-950 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2"
               >
                 <X />
               </Button>
