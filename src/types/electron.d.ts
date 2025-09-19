@@ -39,5 +39,8 @@ declare global {
     url: string;
     headers: string;
     body: string;
+    response: string | null;
+    h_response: string | null;
+    status: number | null;
   }
 }

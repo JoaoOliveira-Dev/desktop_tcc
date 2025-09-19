@@ -23,5 +23,6 @@ contextBridge.exposeInMainWorld("electron", {
   createApiTab: (tab) => ipcRenderer.invoke("create-api-tab", tab),
   updateApiTab: (tab) => ipcRenderer.invoke("update-api-tab", tab),
   deleteApiTab: (id) => ipcRenderer.invoke("delete-api-tab", id),
+
   versions: versions,
 });

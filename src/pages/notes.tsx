@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Trash2, FolderPlus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function PentestNotes() {
   const { projectId } = useParams();
@@ -33,6 +35,8 @@ export default function PentestNotes() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [folder, setFolder] = useState("Recon");
+
+  const [saveMode, setSaveMode] = useState<"auto" | "manual">("auto");
 
   const [debouncedTitle, setDebouncedTitle] = useState(title);
   const [debouncedContent, setDebouncedContent] = useState(content);
@@ -73,7 +77,7 @@ export default function PentestNotes() {
   }, []);
 
   useEffect(() => {
-    if (!debouncedTitle && !debouncedContent && !folder) {
+    if (!debouncedTitle && !debouncedContent && !folder || saveMode === "manual") {
       return;
     }
 
@@ -222,6 +226,16 @@ export default function PentestNotes() {
 
       {/* Editor */}
       <div className="flex-1 p-4 space-y-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="save-mode"
+            checked={saveMode === "auto"}
+            onCheckedChange={(checked) =>
+              setSaveMode(checked ? "auto" : "manual")
+            }
+          />
+          <Label htmlFor="save-mode">Salvar Automaticamente</Label>
+        </div>
         <Input
           placeholder="Título"
           value={title}
@@ -245,9 +259,11 @@ export default function PentestNotes() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
+        {saveMode === "manual" && (
         <Button onClick={handleSaveNote} className="w-full">
-          {selectedNote ? "Atualizar Nota" : "Criar Nota"}
+          Salvar Nota
         </Button>
+        )}
       </div>
     </div>
   );

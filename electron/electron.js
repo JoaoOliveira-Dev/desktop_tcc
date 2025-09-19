@@ -42,8 +42,12 @@ function initDatabase() {
         method TEXT DEFAULT 'GET',
         url TEXT DEFAULT '',
         headers TEXT DEFAULT '',
+        h_response TEXT DEFAULT '',
+        status INTEGER DEFAULT NULL,
         body TEXT DEFAULT '',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        response TEXT DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
       );
     `);
   });
@@ -222,16 +226,20 @@ ipcMain.handle("create-api-tab", async (_, tab) => {
   console.log("Creating API Tab:", tab);
 
   return new Promise((resolve, reject) => {
+    // MODIFICADO: Adicionado o campo 'response' no INSERT
     db.run(
-      `INSERT INTO api_tabs (project_id, name, method, url, headers, body) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO api_tabs (project_id, name, method, url, headers, body, response, h_response, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         tab.project_id,
         tab.name,
         tab.method,
         tab.url,
-        tab.headers ? JSON.stringify(tab.headers) : null,
+        tab.headers || null,
         tab.body || null,
+        tab.response || null,
+        tab.h_response || null,
+        tab.status || null,
       ],
       function (err) {
         if (err) reject(err);
@@ -261,11 +269,8 @@ ipcMain.handle("get-api-tabs", async (_, projectId) => {
         console.error("Database error:", err.message);
         reject(err);
       } else {
-        // Parse headers JSON
-        rows = rows.map((row) => ({
-          ...row,
-          headers: row.headers ? JSON.parse(row.headers) : null,
-        }));
+        // MODIFICADO: Removido o JSON.parse. O frontend espera strings puras.
+        // O SELECT * já busca a nova coluna 'response' automaticamente.
         resolve(rows);
       }
     });
@@ -275,16 +280,20 @@ ipcMain.handle("get-api-tabs", async (_, projectId) => {
 // Atualizar tab
 ipcMain.handle("update-api-tab", async (_, tab) => {
   return new Promise((resolve, reject) => {
+    // MODIFICADO: Adicionado o campo 'response' no UPDATE
     db.run(
       `UPDATE api_tabs 
-       SET name = ?, method = ?, url = ?, headers = ?, body = ? 
+       SET name = ?, method = ?, url = ?, headers = ?, body = ?, response = ? , h_response = ?, status = ?
        WHERE id = ?`,
       [
         tab.name,
         tab.method,
         tab.url,
-        tab.headers ? JSON.stringify(tab.headers) : null,
+        tab.headers || null,
         tab.body || null,
+        tab.response || null,
+        tab.h_response || null,
+        tab.status || null,
         tab.id,
       ],
       function (err) {

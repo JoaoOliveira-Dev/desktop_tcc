@@ -24,7 +24,9 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { AlertCircle, CheckCircle, X } from "lucide-react"; // Ícones do Lucide
+import { Label } from "@/components/ui/label"; // NOVO: Import para Label
+import { Switch } from "@/components/ui/switch"; // NOVO: Import do Switch
+import { AlertCircle, CheckCircle, X } from "lucide-react";
 import { useParams } from "react-router";
 
 // Tipagem para os estados da aplicação
@@ -34,6 +36,7 @@ interface ApiResponse {
   body: string;
 }
 
+// MODIFICADO: Adicionado campo 'response' à tipagem da aba
 interface ApiTab {
   id: number;
   project_id: number | null;
@@ -42,6 +45,9 @@ interface ApiTab {
   url: string;
   headers: string;
   body: string;
+  response: string | null; // Armazenará a resposta como JSON stringificado
+  h_response: string | null;
+  status: number | null;
 }
 
 export default function ApiTester() {
@@ -49,11 +55,11 @@ export default function ApiTester() {
   const [tabs, setTabs] = useState<ApiTab[]>([]);
   const [activeTab, setActiveTab] = useState<string>("");
 
-  const [url, setUrl] = useState<string>("");
-  const [method, setMethod] = useState<string>("GET");
-  const [rawHeaders, setRawHeaders] = useState<string>(""); // Cabeçalhos no formato "chave: valor"
-  const [rawBody, setRawBody] = useState<string>(""); // Corpo no formato "chave: valor" ou JSON
-  const [response, setResponse] = useState<ApiResponse | null>(null);
+  // NOVO: Estado para controlar o modo de salvamento
+  const [saveMode, setSaveMode] = useState<"auto" | "manual">("auto");
+
+  // MODIFICADO: Removido o estado 'response' separado. Ele agora faz parte de cada 'tab'.
+  // const [response, setResponse] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -65,12 +71,48 @@ export default function ApiTester() {
       setTabs(result);
       if (result.length > 0) setActiveTab(String(result[0].id));
     };
+
     fetchTabs();
-  }, []);
+  }, [projectId]);
+
+  // Função centralizada para atualizar uma aba no estado local e, opcionalmente, no banco
+  const handleTabChange = async (
+    tabId: number,
+    updatedFields: Partial<ApiTab>
+  ) => {
+    let updatedTab: ApiTab | undefined;
+
+    setTabs((prev) =>
+      prev.map((t) => {
+        if (t.id === tabId) {
+          updatedTab = { ...t, ...updatedFields };
+          return updatedTab;
+        }
+        return t;
+      })
+    );
+
+    if (saveMode === "auto" && updatedTab) {
+      if (updatedTab.name.trim() === "") {
+        setError("O nome da aba não pode estar vazio.");
+        return;
+      }
+
+      await window.electron.updateApiTab(updatedTab);
+    }
+  };
+
+  // NOVO: Função para salvar manualmente a aba ativa
+  const handleSaveTab = async () => {
+    const currentTab = tabs.find((t) => String(t.id) === activeTab);
+
+    if (currentTab && currentTab !== undefined) {
+      await window.electron.updateApiTab(currentTab);
+      // Opcional: Adicionar um feedback visual de que foi salvo.
+    }
+  };
 
   async function createNewTab() {
-    setResponse(null);
-
     const newTab = await window.electron.createApiTab({
       project_id: projectId ? Number(projectId) : null,
       name: "Nova Aba",
@@ -78,30 +120,30 @@ export default function ApiTester() {
       url: "",
       headers: "",
       body: "",
+      response: null,
+      h_response: null,
+      status: null,
     });
     setTabs((prev) => [...prev, newTab]);
     setActiveTab(String(newTab.id));
   }
 
   async function renameTab(id: number, newName: string) {
-    const tab = tabs.find((t) => t.id === id);
-    if (!tab) return;
-    const updated = await window.electron.updateApiTab({
-      ...tab,
-      name: newName,
-    });
-    setTabs((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    handleTabChange(id, { name: newName });
   }
 
   async function deleteTab(id: number) {
     await window.electron.deleteApiTab(id);
-    setTabs((prev) => prev.filter((t) => t.id !== id));
-    if (String(id) === activeTab && tabs.length > 0) {
-      setActiveTab(String(tabs[0].id));
+    const remainingTabs = tabs.filter((t) => t.id !== id);
+    setTabs(remainingTabs);
+
+    if (String(id) === activeTab && remainingTabs.length > 0) {
+      setActiveTab(String(remainingTabs[0].id));
+    } else if (remainingTabs.length === 0) {
+      setActiveTab("");
     }
   }
 
-  // Função para converter cabeçalhos no formato "chave: valor" para objeto
   const parseHeaders = (rawHeaders: string): Record<string, string> => {
     const headers: Record<string, string> = {};
     rawHeaders.split("\n").forEach((line) => {
@@ -112,10 +154,9 @@ export default function ApiTester() {
     return headers;
   };
 
-  // Função para converter corpo no formato "chave: valor" para JSON
   const parseBody = (rawBody: string): any => {
     try {
-      return JSON.parse(rawBody); // Tenta parsear como JSON
+      return JSON.parse(rawBody);
     } catch {
       const body: Record<string, string> = {};
       rawBody.split("\n").forEach((line) => {
@@ -123,28 +164,25 @@ export default function ApiTester() {
         const value = valueParts.join(":").trim();
         if (key && value) body[key.trim()] = value;
       });
-      return body; // Retorna como objeto se não for JSON
+      return body;
     }
   };
 
-  // Função para formatar cabeçalhos ou corpo no formato "chave: valor"
   const formatAsKeyValue = (data: Record<string, string>): string => {
     return Object.entries(data)
       .map(([key, value]) => `${key}: ${value}`)
       .join("\n");
   };
 
-  // Função para formatar o corpo da resposta
   const formatResponseBody = (body: string): string => {
     try {
-      const parsedBody = JSON.parse(body); // Tenta parsear como JSON
-      return JSON.stringify(parsedBody, null, 2); // Formata como JSON legível
+      const parsedBody = JSON.parse(body);
+      return JSON.stringify(parsedBody, null, 2);
     } catch {
-      return body; // Retorna como texto puro se não for JSON
+      return body;
     }
   };
 
-  // Função para verificar se o corpo é HTML
   const isHtml = (content: string): boolean => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, "text/html");
@@ -161,19 +199,17 @@ export default function ApiTester() {
 
     setLoading(true);
     setError("");
-    setResponse(null);
+    // Limpa a resposta antiga da aba atual no estado local antes de uma nova requisição
+    handleTabChange(tab.id, { response: null });
 
     try {
-      // Parse dos cabeçalhos e do corpo
       const parsedHeaders = parseHeaders(tab.headers || "");
       const parsedBody =
         tab.method !== "GET" ? parseBody(tab.body || "") : undefined;
 
-      // Configuração da solicitação
       const requestOptions: RequestInit = {
         method: tab.method,
         headers: {
-          // Inclui Content-Type apenas para métodos com corpo
           ...(["POST", "PUT"].includes(tab.method) && {
             "Content-Type": "application/json",
           }),
@@ -184,7 +220,6 @@ export default function ApiTester() {
           : undefined,
       };
 
-      // Fazendo a solicitação com proxy
       const proxyUrl = "https://api.allorigins.win/raw?url=";
       const fullUrl = tab.url.startsWith("http")
         ? tab.url
@@ -195,7 +230,6 @@ export default function ApiTester() {
         requestOptions
       );
 
-      // Extraindo informações da resposta
       const responseBody = await res.text();
       const responseHeaders = Object.fromEntries(res.headers.entries());
       const responseStatus = res.status;
@@ -206,7 +240,8 @@ export default function ApiTester() {
         body: responseBody,
       };
 
-      setResponse(fullResponse);
+      // MODIFICADO: Salva a resposta na aba correspondente
+      handleTabChange(tab.id, { response: JSON.stringify(fullResponse) });
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message || "Ocorreu um erro ao buscar os dados.");
@@ -218,187 +253,200 @@ export default function ApiTester() {
     }
   };
 
+  // NOVO: Encontra os dados da aba ativa e parseia sua resposta para renderização
+  const activeTabData = tabs.find((t) => String(t.id) === activeTab);
+  const activeTabResponse: ApiResponse | null = activeTabData?.response
+    ? JSON.parse(activeTabData.response)
+    : null;
+
   return (
     <div className="flex justify-center items-center mt-5 mb-5">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="h-full mb-3">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={String(tab.id)}
-              onClick={() => setResponse(null)}
-            >
-              <input
-                className="bg-transparent border-none focus:ring-0 focus:outline-none w-24 pr-2"
-                value={tab.name}
-                onChange={(e) => renameTab(tab.id, e.target.value)}
-              />
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => deleteTab(tab.id)}
-                className="rounded-full hover:bg-red-950 hover:text-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2"
-              >
-                <X />
-              </Button>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <Card className="w-screen max-w-7xl">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              API Tester <Button onClick={createNewTab}>+ Nova Aba</Button>
-            </CardTitle>
-            <CardDescription>
-              Teste APIs como no Burp Suite. Configure URL, método, cabeçalhos e
-              corpo da requisição.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex justify-center">
+          <TabsList className="h-full mb-3">
             {tabs.map((tab) => (
-              <TabsContent key={tab.id} value={String(tab.id)}>
-                {/* FORMULÁRIO DA ABA */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <Select
-                      value={tab.method}
-                      onValueChange={async (value) => {
-                        const updated = await window.electron.updateApiTab({
-                          ...tab,
-                          method: value,
-                        });
-                        setTabs((prev) =>
-                          prev.map((t) => (t.id === tab.id ? updated : t))
-                        );
-                      }}
-                    >
-                      <SelectTrigger
-                        className={`w-[120px] ${
-                          tab.method === "GET"
-                            ? "text-green-600"
-                            : tab.method === "POST"
-                            ? "text-orange-500"
-                            : tab.method === "PUT"
-                            ? "text-blue-500"
-                            : "text-red-500"
-                        }`}
-                      >
-                        <SelectValue placeholder="Método" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="GET">GET</SelectItem>
-                        <SelectItem value="POST">POST</SelectItem>
-                        <SelectItem value="PUT">PUT</SelectItem>
-                        <SelectItem value="DELETE">DELETE</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Input
-                      type="text"
-                      placeholder="Insira a URL da API"
-                      value={tab.url}
-                      disabled={loading}
-                      onChange={async (e) => {
-                        const updated = await window.electron.updateApiTab({
-                          ...tab,
-                          url: e.target.value,
-                        });
-                        setTabs((prev) =>
-                          prev.map((t) => (t.id === tab.id ? updated : t))
-                        );
-                      }}
-                    />
-
-                    <Button onClick={() => handleFetch(tab)} disabled={loading}>
-                      {" "}
-                      {loading ? "Carregando..." : "Enviar"}
-                    </Button>
-                  </div>
-
-                  <Textarea
-                    placeholder="Cabeçalhos (chave: valor) \n Authorization: Bearer token \n Content-Type: application/json"
-                    value={tab.headers}
-                    onChange={async (e) => {
-                      const updated = await window.electron.updateApiTab({
-                        ...tab,
-                        headers: e.target.value,
-                      });
-                      setTabs((prev) =>
-                        prev.map((t) => (t.id === tab.id ? updated : t))
-                      );
-                    }}
-                  />
-
-                  {["POST", "PUT"].includes(tab.method) && (
-                    <Textarea
-                      placeholder="Corpo da requisição"
-                      value={tab.body}
-                      onChange={async (e) => {
-                        const updated = await window.electron.updateApiTab({
-                          ...tab,
-                          body: e.target.value,
-                        });
-                        setTabs((prev) =>
-                          prev.map((t) => (t.id === tab.id ? updated : t))
-                        );
-                      }}
-                    />
-                  )}
-                </div>
-
-                {/* RESPOSTA */}
-                {response && (
-                  <div className="space-y-4">
-                    {/* Status */}
-                    <div className="flex items-center space-x-2 mt-5">
-                      {response.status >= 200 && response.status < 300 ? (
-                        <CheckCircle className="text-green-500" />
-                      ) : (
-                        <AlertCircle className="text-red-500" />
-                      )}
-                      <p className="font-semibold">
-                        Status: {response.status}{" "}
-                        {response.status >= 200 && response.status < 300
-                          ? "(Sucesso)"
-                          : "(Erro)"}
-                      </p>
-                    </div>
-                    {/* Cabeçalhos da Resposta */}
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value="headers">
-                        <AccordionTrigger>Cabeçalhos</AccordionTrigger>
-                        <AccordionContent>
-                          <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
-                            {formatAsKeyValue(response.headers)}
-                          </pre>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                    {/* Corpo da Resposta */}
-                    <Accordion type="single" collapsible className="w-full">
-                      <AccordionItem value="body">
-                        <AccordionTrigger>Corpo</AccordionTrigger>
-                        <AccordionContent>
-                          {isHtml(response.body) ? (
-                            <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
-                              {response.body}
-                            </pre>
-                          ) : (
-                            <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
-                              {formatResponseBody(response.body)}
-                            </pre>
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  </div>
-                )}
-              </TabsContent>
+              <TabsTrigger
+                key={tab.id}
+                value={String(tab.id)}
+                // MODIFICADO: Removido o onClick que limpava a resposta
+              >
+                <input
+                  className="bg-transparent border-none focus:ring-0 focus:outline-none w-24 pr-2"
+                  value={tab.name}
+                  onChange={(e) => renameTab(tab.id, e.target.value)}
+                />
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Impede que o clique ative a aba
+                    deleteTab(tab.id);
+                  }}
+                  className="rounded-full h-6 w-6 p-0"
+                >
+                  <X size={16} />
+                </Button>
+              </TabsTrigger>
             ))}
-          </CardContent>
-          <CardFooter>{/* Botão de envio */}</CardFooter>
-        </Card>
+          </TabsList>
+        </div>
+
+        <div className="flex justify-center">
+          <Card className="w-screen max-w-7xl">
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                API Tester <Button onClick={createNewTab}>+ Nova Aba</Button>
+              </CardTitle>
+              <CardDescription className="flex justify-between items-center pt-2">
+                <span>
+                  Teste APIs como no Burp Suite. Configure URL, método,
+                  cabeçalhos e corpo da requisição.
+                </span>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="save-mode"
+                    checked={saveMode === "auto"}
+                    onCheckedChange={(checked) =>
+                      setSaveMode(checked ? "auto" : "manual")
+                    }
+                  />
+                  <Label htmlFor="save-mode">Salvar Automaticamente</Label>
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {tabs
+                .filter((tab) => String(tab.id) === activeTab) // Renderiza apenas a aba ativa
+                .map((tab) => (
+                  <TabsContent key={tab.id} value={String(tab.id)}>
+                    {/* FORMULÁRIO DA ABA */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <Select
+                          value={tab.method}
+                          onValueChange={(value) =>
+                            handleTabChange(tab.id, { method: value })
+                          }
+                        >
+                          <SelectTrigger
+                            className={`w-[120px] ${
+                              tab.method === "GET"
+                                ? "text-green-600"
+                                : tab.method === "POST"
+                                ? "text-orange-500"
+                                : tab.method === "PUT"
+                                ? "text-blue-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            <SelectValue placeholder="Método" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="GET">GET</SelectItem>
+                            <SelectItem value="POST">POST</SelectItem>
+                            <SelectItem value="PUT">PUT</SelectItem>
+                            <SelectItem value="DELETE">DELETE</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input
+                          type="text"
+                          placeholder="Insira a URL da API"
+                          value={tab.url}
+                          disabled={loading}
+                          onChange={(e) =>
+                            handleTabChange(tab.id, { url: e.target.value })
+                          }
+                        />
+
+                        {/* NOVO: Botão de Salvar Manual */}
+                        {saveMode === "manual" && (
+                          <Button onClick={handleSaveTab}>Salvar</Button>
+                        )}
+
+                        <Button
+                          onClick={() => handleFetch(tab)}
+                          disabled={loading}
+                        >
+                          {loading ? "Carregando..." : "Enviar"}
+                        </Button>
+                      </div>
+
+                      <Textarea
+                        placeholder="Cabeçalhos (chave: valor) \n Authorization: Bearer token \n Content-Type: application/json"
+                        value={tab.headers}
+                        onChange={(e) =>
+                          handleTabChange(tab.id, { headers: e.target.value })
+                        }
+                      />
+
+                      {["POST", "PUT"].includes(tab.method) && (
+                        <Textarea
+                          placeholder="Corpo da requisição"
+                          value={tab.body}
+                          onChange={(e) =>
+                            handleTabChange(tab.id, { body: e.target.value })
+                          }
+                        />
+                      )}
+                    </div>
+
+                    {/* RESPOSTA - MODIFICADO para usar 'activeTabResponse' */}
+                    {error && <p className="text-red-500 mt-4">{error}</p>}
+                    {activeTabResponse && (
+                      <div className="space-y-4">
+                        {/* Status */}
+                        <div className="flex items-center space-x-2 mt-5">
+                          {activeTabResponse.status >= 200 &&
+                          activeTabResponse.status < 300 ? (
+                            <CheckCircle className="text-green-500" />
+                          ) : (
+                            <AlertCircle className="text-red-500" />
+                          )}
+                          <p className="font-semibold">
+                            Status: {activeTabResponse.status}{" "}
+                            {activeTabResponse.status >= 200 &&
+                            activeTabResponse.status < 300
+                              ? "(Sucesso)"
+                              : "(Erro)"}
+                          </p>
+                        </div>
+                        {/* Cabeçalhos da Resposta */}
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="headers">
+                            <AccordionTrigger>Cabeçalhos</AccordionTrigger>
+                            <AccordionContent>
+                              <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
+                                {formatAsKeyValue(activeTabResponse.headers)}
+                              </pre>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                        {/* Corpo da Resposta */}
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="body">
+                            <AccordionTrigger>Corpo</AccordionTrigger>
+                            <AccordionContent>
+                              {isHtml(activeTabResponse.body) ? (
+                                <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
+                                  {activeTabResponse.body}
+                                </pre>
+                              ) : (
+                                <pre className="whitespace-pre-wrap break-all p-4 border rounded bg-white dark:bg-gray-800">
+                                  {formatResponseBody(activeTabResponse.body)}
+                                </pre>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </div>
+                    )}
+                  </TabsContent>
+                ))}
+            </CardContent>
+            <CardFooter>{/* Pode ser usado para algo no futuro */}</CardFooter>
+          </Card>
+        </div>
       </Tabs>
     </div>
   );
