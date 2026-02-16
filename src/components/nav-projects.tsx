@@ -47,6 +47,13 @@ export function NavProjects({
           </SidebarMenuSubItem>
           <SidebarMenuSubItem key="gerador-payloads">
             <SidebarMenuSubButton asChild>
+              <a href="/generate-report">
+                <NotebookPen/><span>Geração de Relatório</span>
+              </a>
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+          <SidebarMenuSubItem key="gerador-payloads">
+            <SidebarMenuSubButton asChild>
               <a href="/payload-generator">
                 <CodeXml/><span>Gerador de payloads</span>
               </a>

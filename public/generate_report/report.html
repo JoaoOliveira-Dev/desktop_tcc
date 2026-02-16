@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório de Pentest</title>
+
+<style>
+
+/* =========================
+   RESET
+========================= */
+* {
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+/* =========================
+   BASE
+========================= */
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background:#f5f7fa;
+  color:#1f2933;
+  line-height:1.6;
+  margin: 20px;
+}
+
+/* =========================
+   CONTAINER
+========================= */
+.container {
+  max-width:1100px;
+  margin:auto;
+  background:white;
+  padding:60px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.08);
+}
+
+/* =========================
+   CAPA
+========================= */
+.cover {
+  text-align:center;
+  padding:120px 20px;
+  border-bottom:4px solid #2563eb;
+}
+
+.cover h1 {
+  font-size:46px;
+  letter-spacing:1px;
+  margin-bottom:20px;
+}
+
+.cover h2 {
+  font-weight:400;
+  color:#6b7280;
+}
+
+.cover .meta {
+  margin-top:40px;
+  font-size:14px;
+}
+
+/* =========================
+   HEADINGS
+========================= */
+h2.section-title {
+  margin-top:50px;
+  margin-bottom:20px;
+  font-size:26px;
+  border-left:6px solid #2563eb;
+  padding-left:15px;
+}
+
+/* =========================
+   CARDS
+========================= */
+.card {
+  background:#f9fafb;
+  padding:25px;
+  border-radius:10px;
+  margin-bottom:20px;
+  border:1px solid #e5e7eb;
+}
+
+/* =========================
+   GRID INFO
+========================= */
+.info-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+}
+
+/* =========================
+   BADGES
+========================= */
+.badge {
+  display:inline-block;
+  padding:6px 14px;
+  border-radius:6px;
+  font-weight:600;
+  font-size:13px;
+  letter-spacing:.4px;
+}
+
+.critical { background:#7f1d1d; color:white; }
+.high { background:#dc2626; color:white; }
+.medium { background:#f59e0b; color:white; }
+.low { background:#2563eb; color:white; }
+.info { background:#6b7280; color:white; }
+
+/* =========================
+   SUMMARY BOX
+========================= */
+.summary-grid {
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:15px;
+  margin-top:20px;
+}
+
+.summary-item {
+  text-align:center;
+  padding:20px;
+  border-radius:10px;
+  font-weight:600;
+}
+
+.summary-item span {
+  display:block;
+  font-size:28px;
+  margin-top:6px;
+}
+
+/* =========================
+   VULNERABILIDADE
+========================= */
+.vuln {
+  border-left:6px solid #2563eb;
+  padding:30px;
+  border-radius:10px;
+  margin-bottom:35px;
+  background:white;
+  box-shadow:0 4px 14px rgba(0,0,0,0.05);
+}
+
+.vuln-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:15px;
+}
+
+.vuln-title {
+  font-size:22px;
+  font-weight:700;
+}
+
+.vuln-section {
+  margin-top:18px;
+}
+
+.vuln-section h4 {
+  margin-bottom:6px;
+  color:#374151;
+}
+
+code {
+  display:block;
+  background:#111827;
+  color:#e5e7eb;
+  padding:20px;
+  border-radius:8px;
+  overflow:auto;
+  font-size:13px;
+}
+
+/* =========================
+   LIST
+========================= */
+ul {
+  margin-left:20px;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.footer {
+  margin-top:80px;
+  padding-top:20px;
+  border-top:1px solid #e5e7eb;
+  font-size:14px;
+  color:#6b7280;
+  text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ================= CAPA ================= -->
+
+<div class="cover">
+<h1>RELATÓRIO DE PENTEST</h1>
+<h2>Avaliação de Segurança de Aplicações</h2>
+
+<div class="meta">
+<p><strong>Empresa:</strong> {{nome_empresa}}</p>
+<p><strong>Domínio:</strong> {{dominio_empresa}}</p>
+<p><strong>Data:</strong> {{data_relatorio}}</p>
+</div>
+</div>
+
+<!-- ================= ESCOPO ================= -->
+
+<h2 class="section-title">Escopo</h2>
+<div class="card">
+<p>{{escopo_descricao}}</p>
+</div>
+
+<!-- ================= ALVOS ================= -->
+
+<h2 class="section-title">Alvos Avaliados</h2>
+
+{{#alvos}}
+<div class="card">
+<div class="info-grid">
+<div><strong>URL:</strong> {{url}}</div>
+<div><strong>Login:</strong> {{login}}</div>
+<div><strong>Descrição:</strong> {{descricao}}</div>
+</div>
+</div>
+{{/alvos}}
+
+<!-- ================= RESUMO ================= -->
+
+<h2 class="section-title">Resumo Executivo</h2>
+
+<div class="card">
+<p>{{resumo_executivo}}</p>
+
+<div class="summary-grid">
+<div class="summary-item critical">Critical <span>{{total_critical}}</span></div>
+<div class="summary-item high">High <span>{{total_high}}</span></div>
+<div class="summary-item medium">Medium <span>{{total_medium}}</span></div>
+<div class="summary-item low">Low <span>{{total_low}}</span></div>
+<div class="summary-item info">Info <span>{{total_info}}</span></div>
+</div>
+</div>
+
+<!-- ================= VULNERABILIDADES ================= -->
+
+<h2 class="section-title">Vulnerabilidades Identificadas</h2>
+
+{{#vulnerabilidades}}
+
+<div class="vuln">
+
+<div class="vuln-header">
+<div class="vuln-title">{{titulo}}</div>
+<div class="badge {{severidade}}">{{severidade}}</div>
+</div>
+
+<div class="vuln-section">
+<h4>Categoria</h4>
+<p>{{categoria}}</p>
+</div>
+
+<div class="vuln-section">
+<h4>CVSS</h4>
+<p>{{cvss_score}} — {{cvss_vector}}</p>
+</div>
+
+<div class="vuln-section">
+<h4>Descrição</h4>
+<p>{{descricao}}</p>
+</div>
+
+<div class="vuln-section">
+<h4>Ativo Afetado</h4>
+<p>{{ativo_afetado}}</p>
+</div>
+
+<div class="vuln-section">
+<h4>Impacto</h4>
+<p>{{impacto}}</p>
+</div>
+
+<div class="vuln-section">
+<h4>Recomendação</h4>
+<p>{{recomendacao}}</p>
+</div>
+
+<div class="vuln-section">
+<h4>Referências</h4>
+<ul>
+{{#referencias}}
+<li>{{.}}</li>
+{{/referencias}}
+</ul>
+</div>
+
+<div class="vuln-section">
+<h4>CWE</h4>
+<ul>
+{{#cwe}}
+<li>{{.}}</li>
+{{/cwe}}
+</ul>
+</div>
+
+<div class="vuln-section">
+<h4>Proof of Concept</h4>
+<p>{{poc_descricao}}</p>
+<code>{{poc_codigo}}</code>
+</div>
+
+</div>
+
+{{/vulnerabilidades}}
+
+<!-- ================= RESPONSÁVEL ================= -->
+
+<h2 class="section-title">Responsável Técnico</h2>
+
+<div class="card">
+<p><strong>Nome:</strong> {{autor_nome}}</p>
+<p><strong>Cargo:</strong> {{autor_cargo}}</p>
+<p><strong>Telefone:</strong> {{autor_telefone}}</p>
+<p><strong>Email:</strong> {{autor_email}}</p>
+</div>
+
+<div class="footer">
+Relatório Confidencial — Uso Restrito
+</div>
+
+</div>
+</body>
+</html>

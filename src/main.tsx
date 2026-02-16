@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router";
 import "./index.css";
@@ -17,6 +16,7 @@ import ClickJackingPage from "./pages/clickJacking";
 import SubdomainTakeoverPage from "./pages/subdomainTakeover";
 import PentestNotes from "./pages/notes";
 import ForbidenBypassPage from "./pages/forbidenBypass";
+import AIReportGenerator from "./pages/aiReportGenerator";
 
 
 const App = () => (
@@ -30,6 +30,10 @@ const App = () => (
 
         <Route path="/notes" element={<PentestNotes />} />
         <Route path="/notes/:projectId" element={<PentestNotes />} />
+
+        {/* <Route path="/generate-report" element={<PentestNotes />} /> */}
+
+        <Route path="/generate-report" element={<AIReportGenerator />} />
 
         <Route path="/api" element={<ApiTester />} />
         <Route path="/api/:projectId" element={<ApiTester />} />

@@ -9,8 +9,6 @@ import {
   GalleryVerticalEnd,
   CodeXml,
   SquareTerminal,
-  Settings2,
-  BookOpen,
   Bot,
 } from "lucide-react";
 
@@ -152,6 +150,11 @@ const data = {
       name: "Encoder/Decoder",
       url: "/encoder-decoder",
       icon: Pi,
+    },
+    {
+      name: "Relatório com IA",
+      url: "/ai-report-generator",
+      icon: Bot,
     },
   ],
 };
