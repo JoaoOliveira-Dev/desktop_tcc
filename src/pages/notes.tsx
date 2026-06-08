@@ -1,4 +1,10 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ClipboardEvent,
+  type FormEvent,
+} from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +34,97 @@ import { Trash2, FolderPlus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+const defaultFolders = [
+  "Recon",
+  "Exploitation",
+  "Post-Exploitation",
+  "Vulnerability Analysis",
+];
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function looksLikeHtml(value: string) {
+  return /<\/?(?:a|b|blockquote|br|code|div|em|h[1-6]|i|img|li|ol|p|pre|span|strong|u|ul)\b/i.test(
+    value
+  );
+}
+
+function toEditorHtml(value: string) {
+  if (!value) return "";
+  if (looksLikeHtml(value)) return value;
+
+  return escapeHtml(value).replace(/\r\n|\r|\n/g, "<br>");
+}
+
+function getContentMetadata(value: string) {
+  const html = toEditorHtml(value);
+
+  if (typeof document === "undefined") {
+    return {
+      imageCount: /<img\b/i.test(html) ? 1 : 0,
+      text: value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+    };
+  }
+
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  return {
+    imageCount: container.querySelectorAll("img").length,
+    text: (container.innerText || container.textContent || "")
+      .replace(/\s+/g, " ")
+      .trim(),
+  };
+}
+
+function hasMeaningfulContent(value: string) {
+  const { imageCount, text } = getContentMetadata(value);
+  return imageCount > 0 || text.length > 0;
+}
+
+function getNotePreview(value: string) {
+  const { imageCount, text } = getContentMetadata(value);
+
+  if (text) {
+    return text.length > 50 ? `${text.slice(0, 50)}...` : text;
+  }
+
+  if (imageCount > 0) {
+    return `${imageCount} print${imageCount > 1 ? "s" : ""} anexado${
+      imageCount > 1 ? "s" : ""
+    }`;
+  }
+
+  return "Sem conteúdo";
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Não foi possível ler a imagem colada."));
+      }
+    };
+
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function PentestNotes() {
   const { projectId } = useParams();
+  const editorRef = useRef<HTMLDivElement>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [title, setTitle] = useState("");
@@ -38,38 +133,10 @@ export default function PentestNotes() {
 
   const [saveMode, setSaveMode] = useState<"auto" | "manual">("auto");
 
-  const [debouncedTitle, setDebouncedTitle] = useState(title);
-  const [debouncedContent, setDebouncedContent] = useState(content);
-
-  const [folders, setFolders] = useState<string[]>([
-    "Recon",
-    "Exploitation",
-    "Post-Exploitation",
-    "Vulnerability Analysis",
-  ]);
+  const [folders, setFolders] = useState<string[]>(defaultFolders);
 
   const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedTitle(title);
-    }, 200);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [title]);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedContent(content);
-    }, 200);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [content]);
 
   // Carregar notas
   useEffect(() => {
@@ -77,12 +144,32 @@ export default function PentestNotes() {
   }, []);
 
   useEffect(() => {
-    if (!debouncedTitle && !debouncedContent && !folder || saveMode === "manual") {
+    if (saveMode === "manual") {
       return;
     }
 
-    handleSaveNote();
-  }, [debouncedTitle, debouncedContent, folder, selectedNote]);
+    if (!selectedNote && !title.trim() && !hasMeaningfulContent(content)) {
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      handleSaveNote();
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [title, content, folder, selectedNote?.id, saveMode]);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+
+    if (!editor || document.activeElement === editor) {
+      return;
+    }
+
+    if (editor.innerHTML !== content) {
+      editor.innerHTML = content;
+    }
+  }, [content]);
 
   async function fetchNotes() {
     const result = await window.electron.getNotes(
@@ -95,23 +182,26 @@ export default function PentestNotes() {
   }
 
   async function handleSaveNote() {
+    const noteTitle = title.trim() || "Nova Nota";
+
     if (selectedNote && selectedNote.id) {
       const updated = {
         ...selectedNote,
-        title: debouncedTitle,
-        content: debouncedContent,
+        title: noteTitle,
+        content,
         folder,
       };
       await window.electron.updateNote(updated);
+      setSelectedNote(updated);
       // Atualiza a lista de notas com a versão mais recente
       setNotes((prevNotes) =>
         prevNotes.map((n) => (n.id === updated.id ? updated : n))
       );
     } else {
       const newNote = await window.electron.createNote({
-        project_id: Number(projectId),
-        title: debouncedTitle || "Nova Nota",
-        content: debouncedContent,
+        project_id: projectId ? Number(projectId) : null,
+        title: noteTitle,
+        content,
         folder,
       });
 
@@ -124,10 +214,16 @@ export default function PentestNotes() {
   }
 
   function handleSelectNote(note: Note) {
+    const noteContent = toEditorHtml(note.content);
+
     setSelectedNote(note);
     setTitle(note.title);
-    setContent(note.content);
+    setContent(noteContent);
     setFolder(note.folder);
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = noteContent;
+    }
   }
 
   function newNoteForm() {
@@ -135,6 +231,10 @@ export default function PentestNotes() {
     setTitle("");
     setContent("");
     setFolder("Recon");
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML = "";
+    }
   }
 
   async function handleDeleteNote(id: number) {
@@ -150,6 +250,111 @@ export default function PentestNotes() {
     setFolders((prev) => [...prev, name]);
     setNewFolderName("");
     setIsNewFolderOpen(false);
+  }
+
+  function handleEditorInput(event: FormEvent<HTMLDivElement>) {
+    setContent(event.currentTarget.innerHTML);
+  }
+
+  function insertFragmentAtCursor(fragment: DocumentFragment) {
+    const editor = editorRef.current;
+
+    if (!editor) return;
+
+    editor.focus();
+
+    const selection = window.getSelection();
+    let range: Range | null = null;
+
+    if (selection && selection.rangeCount > 0) {
+      const selectedRange = selection.getRangeAt(0);
+
+      if (editor.contains(selectedRange.commonAncestorContainer)) {
+        range = selectedRange;
+      }
+    }
+
+    if (!range) {
+      range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+    }
+
+    const lastNode = fragment.lastChild;
+
+    range.deleteContents();
+    range.insertNode(fragment);
+
+    if (lastNode && selection) {
+      range.setStartAfter(lastNode);
+      range.setEndAfter(lastNode);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    setContent(editor.innerHTML);
+  }
+
+  function insertPlainTextAtCursor(text: string) {
+    const fragment = document.createDocumentFragment();
+    const lines = text.split(/\r\n|\r|\n/);
+
+    lines.forEach((line, index) => {
+      if (index > 0) {
+        fragment.appendChild(document.createElement("br"));
+      }
+
+      fragment.appendChild(document.createTextNode(line));
+    });
+
+    insertFragmentAtCursor(fragment);
+  }
+
+  function insertImageAtCursor(src: string) {
+    const fragment = document.createDocumentFragment();
+    const image = document.createElement("img");
+
+    image.src = src;
+    image.alt = "Print colada";
+    image.loading = "lazy";
+
+    fragment.appendChild(image);
+    fragment.appendChild(document.createElement("br"));
+
+    insertFragmentAtCursor(fragment);
+  }
+
+  async function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
+    const clipboardItems = Array.from(event.clipboardData.items);
+    const imageItems = clipboardItems.filter((item) =>
+      item.type.startsWith("image/")
+    );
+
+    if (imageItems.length > 0) {
+      event.preventDefault();
+
+      for (const item of imageItems) {
+        const file = item.getAsFile();
+
+        if (!file) continue;
+
+        try {
+          const src = await readFileAsDataUrl(file);
+          insertImageAtCursor(src);
+        } catch (error) {
+          console.error("Erro ao colar imagem na nota:", error);
+        }
+      }
+
+      return;
+    }
+
+    const text = event.clipboardData.getData("text/plain");
+
+    if (text) {
+      event.preventDefault();
+      insertPlainTextAtCursor(text);
+    }
   }
 
   return (
@@ -205,7 +410,7 @@ export default function PentestNotes() {
                         >
                           <p className="font-semibold">{note.title}</p>
                           <p className="text-xs text-gray-400">
-                            {note.content.slice(0, 50)}...
+                            {getNotePreview(note.content)}
                           </p>
                         </div>
                         <Button
@@ -253,16 +458,27 @@ export default function PentestNotes() {
             ))}
           </SelectContent>
         </Select>
-        <textarea
-          className="w-full h-[65vh] bg-[#0f1720] p-3 rounded text-sm text-white focus:ring-0 focus:outline-none"
-          placeholder="Conteúdo da nota"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-        />
+        <div className="relative">
+          <div
+            ref={editorRef}
+            className="note-content-editor w-full h-[65vh] overflow-auto whitespace-pre-wrap break-words bg-[#0f1720] p-3 rounded text-sm text-white focus:ring-0 focus:outline-none"
+            contentEditable
+            role="textbox"
+            aria-label="Conteúdo da nota"
+            onInput={handleEditorInput}
+            onPaste={handlePaste}
+            suppressContentEditableWarning
+          />
+          {!hasMeaningfulContent(content) && (
+            <span className="pointer-events-none absolute left-3 top-3 text-sm text-gray-400">
+              Conteúdo da nota
+            </span>
+          )}
+        </div>
         {saveMode === "manual" && (
-        <Button onClick={handleSaveNote} className="w-full">
-          Salvar Nota
-        </Button>
+          <Button onClick={handleSaveNote} className="w-full">
+            Salvar Nota
+          </Button>
         )}
       </div>
     </div>

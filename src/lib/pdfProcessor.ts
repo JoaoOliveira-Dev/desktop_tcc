@@ -3,6 +3,8 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 // Definir o worker PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`;
 
+export type AIProvider = 'claude' | 'openai' | 'openrouter';
+
 export async function extractTextFromPDF(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -22,54 +24,60 @@ export async function extractTextFromPDF(file: File): Promise<string> {
 }
 
 export interface ReportData {
-  nome_empresa: string;
-  dominio_empresa: string;
-  data_relatorio: string;
-  escopo_descricao: string;
-  resumo_executivo: string;
+  nome_empresa: string | null;
+  dominio_empresa: string | null;
+  data_relatorio: string | null;
+  escopo_descricao: string | null;
+  resumo_executivo: string | null;
   total_critical: number;
   total_high: number;
   total_medium: number;
   total_low: number;
   total_info: number;
   alvos: Array<{
-    url: string;
-    login: string;
-    descricao: string;
+    url: string | null;
+    login: string | null;
+    descricao: string | null;
   }>;
   vulnerabilidades: Array<{
     titulo: string;
-    categoria: string;
+    categoria: string | null;
     severidade: 'critical' | 'high' | 'medium' | 'low' | 'info';
-    cvss_score: string;
-    cvss_vector: string;
-    descricao: string;
-    ativo_afetado: string;
-    impacto: string;
-    recomendacao: string;
+    cvss_score: string | number | null;
+    cvss_vector: string | null;
+    descricao: string | null;
+    ativo_afetado: string | null;
+    impacto: string | null;
+    recomendacao: string | null;
     referencias: string[];
     cwe: string[];
-    poc_descricao: string;
-    poc_codigo: string;
+    poc_descricao: string | null;
+    poc_codigo: string | null;
   }>;
-  autor_nome: string;
-  autor_cargo: string;
-  autor_telefone: string;
-  autor_email: string;
+  evidencias?: Array<{
+    titulo: string;
+    descricao: string;
+    src: string;
+  }>;
+  autor_nome: string | null;
+  autor_cargo: string | null;
+  autor_telefone: string | null;
+  autor_email: string | null;
 }
 
 export async function processWithAI(
-  pdfText: string,
+  sourceText: string,
   apiKey: string,
-  provider: 'claude' | 'openai' = 'claude'
+  provider: AIProvider = 'claude',
+  options?: { openRouterModel?: string }
 ): Promise<ReportData> {
 const prompt = `
 Você é um especialista em análise técnica de relatórios de pentest e classificação de vulnerabilidades usando padrões internacionais de segurança.
 
-Analise o texto extraído de um PDF contendo resultados de segurança ofensiva e converta para um JSON estruturado.
+Analise o conteúdo de entrada contendo resultados de segurança ofensiva. A entrada pode combinar texto extraído de PDF, anotações de projeto, escopo, evidências e observações do pentest. Converta tudo para um JSON estruturado.
 
-TEXTO DO PDF:
-${pdfText}
+CONTEÚDO DE ENTRADA:
+${sourceText}
 
 RETORNE EXATAMENTE UM OBJETO JSON VÁLIDO seguindo este schema.
 
@@ -242,13 +250,22 @@ IMPORTANTE
 - Não invente informações que não existem no texto
 - Inferência mínima permitida
 - Preserve precisão técnica absoluta
+- Quando houver anotações de projeto, use-as como fonte primária para complementar escopo, ativos, PoCs, impactos e recomendações
 `;
 
   if (provider === 'claude') {
     return await processWithClaude(prompt, apiKey);
-  } else {
-    return await processWithOpenAI(prompt, apiKey);
   }
+
+  if (provider === 'openrouter') {
+    return await processWithOpenRouter(
+      prompt,
+      apiKey,
+      options?.openRouterModel?.trim() || undefined
+    );
+  }
+
+  return await processWithOpenAI(prompt, apiKey);
 }
 
 async function processWithClaude(prompt: string, apiKey: string): Promise<ReportData> {
@@ -373,33 +390,107 @@ async function processWithOpenAI(prompt: string, apiKey: string): Promise<Report
   }
 }
 
+async function processWithOpenRouter(
+  prompt: string,
+  apiKey: string,
+  model = 'openai/gpt-4o-mini'
+): Promise<ReportData> {
+  try {
+    console.log('📤 Enviando requisição para OpenRouter API...');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+    const appUrl =
+      typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        'HTTP-Referer': appUrl,
+        'X-Title': 'desktop_tcc',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 4096,
+      }),
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      console.error('❌ OpenRouter API error response:', error);
+      throw new Error(
+        `OpenRouter API error: ${error.error?.message || `Status ${response.status}`}`
+      );
+    }
+
+    const data = await response.json();
+    console.log('✓ Resposta recebida do OpenRouter');
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('❌ Resposta com formato inválido:', data);
+      throw new Error('Formato de resposta do OpenRouter inválido');
+    }
+
+    const content = data.choices[0].message.content;
+    console.log(
+      '📄 Conteúdo da resposta (primeiros 500 caracteres):',
+      content.substring(0, 500)
+    );
+
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('❌ Não encontrou JSON na resposta:', content);
+      throw new Error('Não foi possível extrair JSON válido da resposta da IA');
+    }
+
+    const parsedData = JSON.parse(jsonMatch[0]);
+    console.log('✓ JSON extraído e parseado com sucesso');
+    return parsedData;
+  } catch (error) {
+    console.error('❌ Erro em processWithOpenRouter:', error);
+    throw error;
+  }
+}
+
 export function fillReportTemplate(templateHtml: string, data: ReportData): string {
   let html = templateHtml;
-
-  // Substituir campos simples
-  html = html.replace(/\{\{nome_empresa\}\}/g, data.nome_empresa);
-  html = html.replace(/\{\{dominio_empresa\}\}/g, data.dominio_empresa);
-  html = html.replace(/\{\{data_relatorio\}\}/g, data.data_relatorio);
-  html = html.replace(/\{\{escopo_descricao\}\}/g, data.escopo_descricao);
-  html = html.replace(/\{\{resumo_executivo\}\}/g, data.resumo_executivo);
-  html = html.replace(/\{\{total_critical\}\}/g, data.total_critical.toString());
-  html = html.replace(/\{\{total_high\}\}/g, data.total_high.toString());
-  html = html.replace(/\{\{total_medium\}\}/g, data.total_medium.toString());
-  html = html.replace(/\{\{total_low\}\}/g, data.total_low.toString());
-  html = html.replace(/\{\{total_info\}\}/g, data.total_info.toString());
-  html = html.replace(/\{\{autor_nome\}\}/g, data.autor_nome);
-  html = html.replace(/\{\{autor_cargo\}\}/g, data.autor_cargo);
-  html = html.replace(/\{\{autor_telefone\}\}/g, data.autor_telefone);
-  html = html.replace(/\{\{autor_email\}\}/g, data.autor_email);
 
   // Substituir seções iteráveis
   html = substituirSecaoIteravel(html, 'alvos', data.alvos);
   html = substituirSecaoIteravel(html, 'vulnerabilidades', data.vulnerabilidades);
+  html = substituirSecaoIteravel(html, 'evidencias', data.evidencias ?? []);
+
+  // Substituir campos simples
+  html = replaceScalar(html, 'nome_empresa', data.nome_empresa);
+  html = replaceScalar(html, 'dominio_empresa', data.dominio_empresa);
+  html = replaceScalar(html, 'data_relatorio', data.data_relatorio);
+  html = replaceScalar(html, 'escopo_descricao', data.escopo_descricao);
+  html = replaceScalar(html, 'resumo_executivo', data.resumo_executivo);
+  html = replaceScalar(html, 'total_critical', data.total_critical);
+  html = replaceScalar(html, 'total_high', data.total_high);
+  html = replaceScalar(html, 'total_medium', data.total_medium);
+  html = replaceScalar(html, 'total_low', data.total_low);
+  html = replaceScalar(html, 'total_info', data.total_info);
+  html = replaceScalar(html, 'autor_nome', data.autor_nome);
+  html = replaceScalar(html, 'autor_cargo', data.autor_cargo);
+  html = replaceScalar(html, 'autor_telefone', data.autor_telefone);
+  html = replaceScalar(html, 'autor_email', data.autor_email);
 
   return html;
 }
 
-function substituirSecaoIteravel(html: string, sectionName: string, items: any[]): string {
+function substituirSecaoIteravel(html: string, sectionName: string, items: any[] = []): string {
   const regex = new RegExp(`\\{\\{#${sectionName}\\}\\}([\\s\\S]*?)\\{\\{\\/${sectionName}\\}\\}`, 'g');
   
   return html.replace(regex, (_match: string, template: string) => {
@@ -412,15 +503,58 @@ function substituirSecaoIteravel(html: string, sectionName: string, items: any[]
             const arrayRegex = new RegExp(`\\{\\{#${key}\\}\\}([\\s\\S]*?)\\{\\{\\/${key}\\}\\}`, 'g');
             itemHtml = itemHtml.replace(arrayRegex, (_arrayMatch: string, arrayTemplate: string) => {
               return value
-                .map((v: any) => arrayTemplate.replace(/\{\{\\.\}\}/g, v))
+                .map((v: any) =>
+                  arrayTemplate.replace(/\{\{\.\}\}/g, formatTemplateValue(v))
+                )
                 .join('');
             });
           } else {
-            itemHtml = itemHtml.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+            itemHtml = itemHtml.replace(
+              new RegExp(`\\{\\{${key}\\}\\}`, 'g'),
+              formatTemplateValue(value, isRichTextKey(key))
+            );
           }
         }
         return itemHtml;
       })
       .join('');
   });
+}
+
+function replaceScalar(html: string, key: string, value: unknown) {
+  return html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), formatTemplateValue(value));
+}
+
+function formatTemplateValue(value: unknown, richText = false) {
+  if (value === null || value === undefined) return '';
+  if (richText) return formatRichTextValue(String(value));
+  return escapeHtml(String(value));
+}
+
+function formatRichTextValue(value: string) {
+  if (/<\/?[a-z][\s\S]*>/i.test(value)) {
+    return value;
+  }
+
+  return escapeHtml(value).replace(/\r\n|\r|\n/g, '<br>');
+}
+
+function isRichTextKey(key: string) {
+  return [
+    'descricao',
+    'ativo_afetado',
+    'impacto',
+    'recomendacao',
+    'poc_descricao',
+    'poc_codigo',
+  ].includes(key);
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

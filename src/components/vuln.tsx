@@ -31,10 +31,10 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { vulnerabilidadesIniciais } from "../utils/vulns";
 import { VulnType } from "../types/types";
 import CVSSCalculator from "./cvsscalculator";
+import RichTextEditor from "./richTextEditor";
 
 interface VulnProps {
   onAddOrUpdateVulnerability: (vulnerability: VulnType) => void;
@@ -45,6 +45,7 @@ interface VulnProps {
 export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: VulnProps) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
+  const [editingId, setEditingId] = React.useState<string | null>(null);
   const [vulnerabilidades, setVulnerabilidades] = React.useState(
     vulnerabilidadesIniciais
   );
@@ -57,54 +58,121 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
   const [impacto, setImpacto] = React.useState("");
   const [reparo, setReparo] = React.useState("");
   const [poc, setPoc] = React.useState("");
+  const [currentCvssData, setCurrentCvssData] =
+    React.useState<VulnType["cvssData"]>(undefined);
+  const [currentSeverity, setCurrentSeverity] = React.useState("");
 
   const [novaVuln, setNovaVuln] = React.useState("");
 
-    // Função para lidar com os dados recebidos do CVSSCalculator
-    const handleCVSSCalculation = (cvssData: {
-      attackVector: string;
-      attackComplexity: string;
-      privilegesRequired: string;
-      userInteraction: string;
-      scope: string;
-      confidentialityImpact: string;
-      integrityImpact: string;
-      availabilityImpact: string;
-      score: number;
-    }) => {
-      const severity = getSeverityFromScore(cvssData.score);
-      const vulnerability: VulnType = {
-        id: crypto.randomUUID(),
-        nome,
-        descVuln,
-        ativos,
-        referencia,
-        impacto,
-        reparo,
-        poc,
-        severidade: severity,
-        cvssData,
-      };
-      onAddOrUpdateVulnerability(vulnerability);
-  
-      // Limpa os campos após salvar
-      setValue("")
-      setNome("");
-      setDescVuln("");
-      setAtivos("");
-      setReferencia("");
-      setImpacto("");
-      setReparo("");
-      setPoc("");
+  function clearForm() {
+    setEditingId(null);
+    setValue("");
+    setNome("");
+    setDescVuln("");
+    setAtivos("");
+    setReferencia("");
+    setImpacto("");
+    setReparo("");
+    setPoc("");
+    setCurrentCvssData(undefined);
+    setCurrentSeverity("");
+  }
+
+  function saveVulnerability(cvssData?: VulnType["cvssData"]) {
+    if (!nome.trim()) {
+      alert("Selecione ou crie uma vulnerabilidade antes de salvar.");
+      return;
+    }
+
+    const selectedCvssData = cvssData ?? currentCvssData;
+
+    if (!selectedCvssData) {
+      alert("Calcule o CVSS antes de salvar esta vulnerabilidade.");
+      return;
+    }
+
+    const severity = getSeverityFromScore(selectedCvssData.score);
+    const vulnerability: VulnType = {
+      id: editingId ?? crypto.randomUUID(),
+      nome,
+      descVuln,
+      ativos,
+      referencia,
+      impacto,
+      reparo,
+      poc,
+      severidade: severity,
+      cvssData: selectedCvssData,
     };
-  
-    // Função para determinar a severidade com base na pontuação CVSS
-    const getSeverityFromScore = (score: number): string => {
-      if (score >= 9.0) return "Critical";
-      if (score >= 7.0) return "High";
-      if (score >= 4.0) return "Medium";
-      return "Low";
-    };
+
+    onAddOrUpdateVulnerability(vulnerability);
+    clearForm();
+  }
+
+  // Função para lidar com os dados recebidos do CVSSCalculator
+  const handleCVSSCalculation = (cvssData: {
+    attackVector: string;
+    attackComplexity: string;
+    privilegesRequired: string;
+    userInteraction: string;
+    scope: string;
+    confidentialityImpact: string;
+    integrityImpact: string;
+    availabilityImpact: string;
+    score: number;
+  }) => {
+    setCurrentCvssData(cvssData);
+    setCurrentSeverity(getSeverityFromScore(cvssData.score));
+    saveVulnerability(cvssData);
+  };
+
+  // Função para determinar a severidade com base na pontuação CVSS
+  const getSeverityFromScore = (score: number): string => {
+    if (score >= 9.0) return "Critical";
+    if (score >= 7.0) return "High";
+    if (score >= 4.0) return "Medium";
+    return "Low";
+  };
+
+  function selectTemplateVulnerability(vulnerability: any, currentValue: string) {
+    const nextValue = currentValue === value ? "" : currentValue;
+
+    setEditingId(null);
+    setValue(nextValue);
+    setOpen(false);
+    setNome(nextValue ? vulnerability.value : "");
+    setDescVuln(nextValue ? vulnerability.desc || "" : "");
+    setReferencia(nextValue ? vulnerability.referencia || "" : "");
+    setAtivos("");
+    setImpacto("");
+    setReparo("");
+    setPoc("");
+    setCurrentCvssData(undefined);
+    setCurrentSeverity("");
+  }
+
+  function editVulnerability(vulnerability: VulnType) {
+    if (
+      !vulnerabilidades.some((item) => item.value === vulnerability.nome)
+    ) {
+      setVulnerabilidades((prev) => [
+        ...prev,
+        { value: vulnerability.nome, label: vulnerability.nome },
+      ]);
+    }
+
+    setEditingId(vulnerability.id);
+    setValue(vulnerability.nome);
+    setNome(vulnerability.nome);
+    setDescVuln(vulnerability.descVuln);
+    setAtivos(vulnerability.ativos);
+    setReferencia(vulnerability.referencia);
+    setImpacto(vulnerability.impacto);
+    setReparo(vulnerability.reparo);
+    setPoc(vulnerability.poc);
+    setCurrentCvssData(vulnerability.cvssData);
+    setCurrentSeverity(vulnerability.severidade);
+  }
 
   // Função para adicionar uma nova vulnerabilidade à lista
   const adicionarNovaVuln = () => {
@@ -115,6 +183,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
       };
       setVulnerabilidades([...vulnerabilidades, novaVulnerabilidade]);
       setValue(novaVuln);
+      setNome(novaVuln);
       setNovaVuln("");
       setOpen(false);
     }
@@ -178,11 +247,10 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
                       key={vulnerabilidade.value}
                       value={vulnerabilidade.value}
                       onSelect={(currentValue) => {
-                        setValue(currentValue === value ? "" : currentValue);
-                        setOpen(false);
-                        setNome(vulnerabilidade.value);
-                        setDescVuln(vulnerabilidade.desc || "");
-                        setReferencia(vulnerabilidade.referencia || "");
+                        selectTemplateVulnerability(
+                          vulnerabilidade,
+                          currentValue
+                        );
                       }}
                     >
                       {vulnerabilidade.label}
@@ -203,59 +271,77 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
         </Popover>
         {value && (
           <form className="grid w-full items-center gap-4 mt-5">
+            {editingId && (
+              <div className="rounded-md border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-300">
+                Editando vulnerabilidade adicionada. Clique em salvar para
+                atualizar a linha selecionada.
+              </div>
+            )}
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="link">Descrição da vulnerabilidade</Label>
-              <Textarea
-                id="link"
+              <RichTextEditor
                 placeholder="Anote a DESCRIÇÃO da vulnerabilidade"
                 value={descVuln}
-                onChange={(e) => setDescVuln(e.target.value)}
+                onChange={setDescVuln}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="link">Ativo afetado</Label>
-              <Textarea
-                id="referencia"
+              <RichTextEditor
                 placeholder="Anote os ATIVOS da vulnerabilidade"
                 value={ativos}
-                onChange={(e) => setAtivos(e.target.value)}
+                onChange={setAtivos}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="link">Referência</Label>
-              <Textarea
-                id="referencia"
+              <RichTextEditor
                 placeholder="Anote as REFERÊNCIAS da vulnerabilidade"
                 value={referencia}
-                onChange={(e) => setReferencia(e.target.value)}
+                onChange={setReferencia}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="link">Impacto</Label>
-              <Textarea
-                id="impacto"
+              <RichTextEditor
                 placeholder="Anote os IMPACTOS da vulnerabilidade"
                 value={impacto}
-                onChange={(e) => setImpacto(e.target.value)}
+                onChange={setImpacto}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="link">Ação de reparo</Label>
-              <Textarea
-                id="reparo"
+              <RichTextEditor
                 placeholder="Anote as AÇÕES DE REPARO da vulnerabilidade"
                 value={reparo}
-                onChange={(e) => setReparo(e.target.value)}
+                onChange={setReparo}
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="link">Proof Of Concept</Label>
-              <Textarea
-                id="poc"
+              <RichTextEditor
                 placeholder="Anote as PROVAS DE CONCEITO da vulnerabilidade"
                 value={poc}
-                onChange={(e) => setPoc(e.target.value)}
+                onChange={setPoc}
+                minHeight="min-h-[220px]"
               />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => saveVulnerability()}
+                disabled={!currentCvssData}
+              >
+                {editingId ? "Salvar alterações" : "Salvar vulnerabilidade"}
+              </Button>
+              <Button type="button" variant="outline" onClick={clearForm}>
+                Cancelar
+              </Button>
+              {currentSeverity && (
+                <span className="text-sm text-muted-foreground">
+                  Risco atual: {currentSeverity}
+                </span>
+              )}
             </div>
             <CVSSCalculator onCalculate={handleCVSSCalculation} />
           </form>
@@ -269,7 +355,11 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
           <TableBody>
             {vulns.length > 0 ? (
               vulns.map((vuln, index) => (
-                <TableRow key={vuln.id}>
+                <TableRow
+                  key={vuln.id}
+                  className="cursor-pointer"
+                  onClick={() => editVulnerability(vuln)}
+                >
                   <TableCell className="text-center font-medium">
                     {String(index + 1).padStart(2, "0")}
                   </TableCell>
@@ -277,8 +367,10 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
                   <TableCell>{vuln.severidade}</TableCell>
                   <TableCell className="text-center">
                     <Button
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation();
                         setVulns(vulns.filter((v) => v.id !== vuln.id));
+                        if (editingId === vuln.id) clearForm();
                       }}
                       variant="destructive"
                       size="sm"

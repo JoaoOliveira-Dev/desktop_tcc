@@ -33,11 +33,13 @@ export default function Scope({ alvos, setAlvos }: ScopeProps) {
   const [novoAlvo, setNovoAlvo] = useState<string>("");
 
   const adicionarAlvo = () => {
-    if (novoAlvo.trim() !== "" && isValidUrl(novoAlvo)) {
-      setAlvos([...alvos, { id: uuidv4(), link: novoAlvo }]);
+    const alvo = novoAlvo.trim();
+
+    if (alvo !== "" && isValidUrl(alvo)) {
+      setAlvos([...alvos, { id: uuidv4(), link: alvo }]);
       setNovoAlvo("");
     } else {
-      alert("Por favor, insira uma URL válida.");
+      alert("Por favor, insira um domínio, IP ou URL válida.");
     }
   };
 
@@ -46,16 +48,16 @@ export default function Scope({ alvos, setAlvos }: ScopeProps) {
       <CardHeader>
         <CardTitle>Escopo do Pentest</CardTitle>
         <CardDescription>
-          Adicione os links dos alvos que serão testados.
+          Adicione domínios, IPs ou URLs dos alvos que serão testados.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid w-full items-center gap-4">
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="link">Link do Alvo</Label>
+            <Label htmlFor="link">Alvo</Label>
             <Input
               id="link"
-              placeholder="Insira o link do alvo"
+              placeholder="Ex: docs.google.com"
               value={novoAlvo}
               onChange={(e) => setNovoAlvo(e.target.value)}
             />
@@ -75,7 +77,7 @@ export default function Scope({ alvos, setAlvos }: ScopeProps) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px] text-center">#</TableHead>
-            <TableHead>Link do Alvo</TableHead>
+            <TableHead>Alvo</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

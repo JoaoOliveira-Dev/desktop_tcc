@@ -117,3 +117,13 @@
 *::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.7); /* Cor mais escura ao passar o mouse */
 }
+
+.note-content-editor img,
+.rich-content-editor img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.75rem 0;
+  border: 1px solid rgba(75, 85, 99, 0.85);
+  border-radius: 0.375rem;
+}

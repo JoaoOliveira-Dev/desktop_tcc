@@ -10,15 +10,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Upload, Loader, Download, AlertCircle, CheckCircle } from 'lucide-react';
-import { extractTextFromPDF, processWithAI, fillReportTemplate, ReportData } from '@/lib/pdfProcessor';
+import { Upload, Loader, Download, AlertCircle, CheckCircle, FolderOpen } from 'lucide-react';
+import {
+  extractTextFromPDF,
+  processWithAI,
+  fillReportTemplate,
+  ReportData,
+  type AIProvider,
+} from '@/lib/pdfProcessor';
+import {
+  getReportTemplate,
+  reportTemplates,
+  type ReportTemplateId,
+} from '@/lib/reportTemplates';
+import { downloadHtmlFile, downloadPdfFromHtml } from '@/lib/htmlReport';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'extracting' | 'processing' | 'generating' | 'success' | 'error';
+
+type Project = {
+  id: number;
+  name: string;
+};
 
 export default function AIReportGenerator() {
   const [file, setFile] = useState<File | null>(null);
   const [apiKey, setApiKey] = useState('');
-  const [provider, setProvider] = useState<'claude' | 'openai'>('claude');
+  const [provider, setProvider] = useState<AIProvider>('claude');
+  const [openRouterModel, setOpenRouterModel] = useState('openai/gpt-4o-mini');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('none');
+  const [projectNotes, setProjectNotes] = useState<Note[]>([]);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] =
+    useState<ReportTemplateId>('rafa');
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [reportData, setReportData] = useState<ReportData | null>(null);
@@ -35,6 +59,45 @@ export default function AIReportGenerator() {
     }
   }, [status, generatedHtml]);
 
+  useEffect(() => {
+    window.electron?.getProjects?.().then((result) => {
+      setProjects(result || []);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (selectedProjectId === 'none') {
+      setProjectNotes([]);
+      return;
+    }
+
+    let isCurrent = true;
+    setIsLoadingNotes(true);
+
+    window.electron
+      .getNotes(Number(selectedProjectId))
+      .then((result) => {
+        if (isCurrent) {
+          setProjectNotes(result || []);
+        }
+      })
+      .catch((error) => {
+        console.error('Erro ao carregar notas do projeto:', error);
+        if (isCurrent) {
+          setProjectNotes([]);
+        }
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setIsLoadingNotes(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedProjectId]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === 'application/pdf') {
@@ -46,9 +109,65 @@ export default function AIReportGenerator() {
     }
   };
 
+  const getSelectedProject = () =>
+    projects.find((project) => String(project.id) === selectedProjectId);
+
+  const readNoteContent = (note: Note) => {
+    const container = document.createElement('div');
+    container.innerHTML = note.content || '';
+
+    const images = Array.from(container.querySelectorAll('img'));
+    images.forEach((image) => image.remove());
+
+    return {
+      text: (container.innerText || container.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+      imageSources: images
+        .map((image) => image.getAttribute('src') || '')
+        .filter(Boolean),
+    };
+  };
+
+  const buildProjectNotesContext = (project: Project, notes: Note[]) => {
+    if (notes.length === 0) {
+      return `PROJETO SELECIONADO: ${project.name}\nSem notas cadastradas.`;
+    }
+
+    const serializedNotes = notes
+      .map((note, index) => {
+        const { text, imageSources } = readNoteContent(note);
+
+        return [
+          `NOTA ${index + 1}`,
+          `Pasta: ${note.folder}`,
+          `Título: ${note.title}`,
+          `Conteúdo: ${text || '[sem texto]'}`,
+          `Prints coladas: ${imageSources.length}`,
+        ].join('\n');
+      })
+      .join('\n\n');
+
+    return `PROJETO SELECIONADO: ${project.name}\n\nANOTAÇÕES DO PROJETO:\n${serializedNotes}`;
+  };
+
+  const extractNoteEvidences = (notes: Note[]) => {
+    return notes.flatMap((note) => {
+      const { imageSources } = readNoteContent(note);
+
+      return imageSources.map((src, index) => ({
+        titulo: `${note.title} - Print ${index + 1}`,
+        descricao: `Evidência importada da pasta ${note.folder}`,
+        src,
+      }));
+    });
+  };
+
   const handleProcess = async () => {
-    if (!file) {
-      setErrorMessage('Por favor, selecione um arquivo PDF.');
+    const selectedProject = getSelectedProject();
+
+    if (!file && !selectedProject) {
+      setErrorMessage('Selecione um arquivo PDF ou um projeto com anotações.');
       return;
     }
 
@@ -59,21 +178,57 @@ export default function AIReportGenerator() {
 
     try {
       setErrorMessage('');
-      setStatus('extracting');
+      const sourceParts: string[] = [];
+      let notesForReport = projectNotes;
       
-      console.log('1. Iniciando extração do PDF...');
-      const pdfText = await extractTextFromPDF(file);
-      console.log('✓ PDF extraído com sucesso, tamanho:', pdfText.length);
+      if (file) {
+        setStatus('extracting');
+        console.log('1. Iniciando extração do PDF...');
+        const pdfText = await extractTextFromPDF(file);
+        sourceParts.push(`TEXTO EXTRAÍDO DO PDF:\n${pdfText}`);
+        console.log('✓ PDF extraído com sucesso, tamanho:', pdfText.length);
+      }
+
+      if (selectedProject) {
+        notesForReport = await window.electron.getNotes(selectedProject.id);
+
+        if (!file && notesForReport.length === 0) {
+          setStatus('idle');
+          setErrorMessage('O projeto selecionado ainda não possui anotações.');
+          return;
+        }
+
+        setProjectNotes(notesForReport);
+        sourceParts.push(buildProjectNotesContext(selectedProject, notesForReport));
+      }
+
+      const sourceText = sourceParts.join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n').trim();
+
+      if (!sourceText) {
+        setStatus('idle');
+        setErrorMessage('Não há conteúdo suficiente para enviar para a IA.');
+        return;
+      }
 
       setStatus('processing');
       console.log('2. Enviando para IA...');
-      const data = await processWithAI(pdfText, apiKey, provider);
+      const data = await processWithAI(sourceText, apiKey, provider, {
+        openRouterModel,
+      });
+      const dataWithEvidence: ReportData = {
+        ...data,
+        evidencias: [
+          ...(data.evidencias ?? []),
+          ...extractNoteEvidences(notesForReport),
+        ],
+      };
       console.log('✓ IA processou com sucesso:', data);
-      setReportData(data);
+      setReportData(dataWithEvidence);
 
       setStatus('generating');
       console.log('3. Carregando template...');
-      const templateResponse = await fetch('/generate_report/report.html');
+      const selectedTemplate = getReportTemplate(selectedTemplateId);
+      const templateResponse = await fetch(selectedTemplate.path);
       if (!templateResponse.ok) {
         throw new Error(`Erro ao carregar template: ${templateResponse.status} ${templateResponse.statusText}`);
       }
@@ -81,7 +236,7 @@ export default function AIReportGenerator() {
       console.log('✓ Template carregado, tamanho:', reportTemplate.length);
 
       console.log('4. Preenchendo relatório...');
-      const html = fillReportTemplate(reportTemplate, data);
+      const html = fillReportTemplate(reportTemplate, dataWithEvidence);
       console.log('✓ Relatório preenchido, tamanho:', html.length);
       setGeneratedHtml(html);
       console.log('📝 HTML setado no estado, aguarde a renderização...');
@@ -101,36 +256,14 @@ export default function AIReportGenerator() {
 
   const handleDownloadReport = () => {
     if (!generatedHtml) return;
-
-    const element = document.createElement('a');
-    element.setAttribute(
-      'href',
-      'data:text/html;charset=utf-8,' + encodeURIComponent(generatedHtml)
-    );
-    element.setAttribute('download', 'relatorio-pentest.html');
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    downloadHtmlFile(generatedHtml, 'relatorio-pentest.html');
   };
 
   const handleDownloadPDF = async () => {
     if (!generatedHtml) return;
 
     try {
-      // Usar a biblioteca instalada html2pdf
-      const html2pdf = (await import('html2pdf.js')).default;
-      
-      html2pdf()
-        .set({
-          margin: 10,
-          filename: 'relatorio-pentest.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
-        })
-        .from(generatedHtml)
-        .save();
+      await downloadPdfFromHtml(generatedHtml, 'relatorio-pentest.pdf');
     } catch (error) {
       setErrorMessage('Erro ao gerar PDF. Tente baixar o HTML.');
       console.error('PDF generation error:', error);
@@ -143,8 +276,8 @@ export default function AIReportGenerator() {
       <div>
         <h1 className="text-3xl font-bold mb-2">Gerador de Relatório com IA</h1>
         <p className="text-muted-foreground">
-          Faça upload de um PDF com os achados do seu pentest e nossa IA irá processar
-          e gerar um relatório profissional automaticamente.
+          Use um PDF, as anotações de um projeto ou os dois como fonte para a IA
+          gerar o relatório automaticamente.
         </p>
       </div>
 
@@ -180,6 +313,72 @@ export default function AIReportGenerator() {
         </CardContent>
       </Card>
 
+      {/* Project and Template Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderOpen size={20} />
+            Projeto e Template
+          </CardTitle>
+          <CardDescription>
+            Selecione um projeto para a IA usar suas anotações e escolha o layout do relatório.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div>
+            <Label htmlFor="project" className="block mb-2">
+              Projeto com anotações
+            </Label>
+            <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um projeto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Não usar projeto</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={String(project.id)}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-2">
+              {selectedProjectId === 'none'
+                ? 'A IA usará apenas o PDF enviado.'
+                : isLoadingNotes
+                ? 'Carregando anotações...'
+                : `${projectNotes.length} nota(s) carregada(s) para contexto.`}
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="template" className="block mb-2">
+              Template do relatório
+            </Label>
+            <Select
+              value={selectedTemplateId}
+              onValueChange={(value) =>
+                setSelectedTemplateId(value as ReportTemplateId)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um template" />
+              </SelectTrigger>
+              <SelectContent>
+                {reportTemplates.map((template) => (
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-2">
+              {getReportTemplate(selectedTemplateId).description}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Configuration Section */}
       <Card>
         <CardHeader>
@@ -191,16 +390,35 @@ export default function AIReportGenerator() {
             <Label htmlFor="provider" className="block mb-2">
               Provedor de IA
             </Label>
-            <Select value={provider} onValueChange={(value: any) => setProvider(value)}>
+            <Select
+              value={provider}
+              onValueChange={(value) => setProvider(value as AIProvider)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="claude">Claude (Anthropic)</SelectItem>
                 <SelectItem value="openai">GPT-4 (OpenAI)</SelectItem>
+                <SelectItem value="openrouter">OpenRouter</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {provider === 'openrouter' && (
+            <div>
+              <Label htmlFor="openrouter-model" className="block mb-2">
+                Modelo OpenRouter
+              </Label>
+              <Input
+                id="openrouter-model"
+                placeholder="Ex: openai/gpt-4o-mini"
+                value={openRouterModel}
+                onChange={(e) => setOpenRouterModel(e.target.value)}
+                className="bg-slate-800 border-slate-700"
+              />
+            </div>
+          )}
 
           <div>
             <Label htmlFor="api-key" className="block mb-2">
@@ -212,6 +430,8 @@ export default function AIReportGenerator() {
               placeholder={
                 provider === 'claude'
                   ? 'sk-ant-...'
+                  : provider === 'openrouter'
+                  ? 'sk-or-v1-...'
                   : 'sk-proj-...'
               }
               value={apiKey}
@@ -221,6 +441,8 @@ export default function AIReportGenerator() {
             <p className="text-xs text-muted-foreground mt-2">
               {provider === 'claude'
                 ? 'Obtenha sua chave em: https://console.anthropic.com/account/keys'
+                : provider === 'openrouter'
+                ? 'Obtenha sua chave em: https://openrouter.ai/keys'
                 : 'Obtenha sua chave em: https://platform.openai.com/account/api-keys'}
             </p>
           </div>
@@ -271,11 +493,16 @@ export default function AIReportGenerator() {
       <div className="flex gap-4">
         <Button
           onClick={handleProcess}
-          disabled={!file || !apiKey || status !== 'idle'}
+          disabled={
+            (!file && selectedProjectId === 'none') ||
+            !apiKey ||
+            (status !== 'idle' && status !== 'error') ||
+            isLoadingNotes
+          }
           size="lg"
           className="flex-1"
         >
-          {status === 'idle' ? (
+          {status === 'idle' || status === 'error' ? (
             <>
               <Upload size={18} className="mr-2" />
               Processar Relatório
@@ -315,6 +542,18 @@ export default function AIReportGenerator() {
                         reportData.total_medium +
                         reportData.total_low +
                         reportData.total_info}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-400">Template:</span>{' '}
+                    <span className="font-semibold">
+                      {getReportTemplate(selectedTemplateId).name}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-gray-400">Evidências das notas:</span>{' '}
+                    <span className="font-semibold">
+                      {reportData.evidencias?.length ?? 0}
                     </span>
                   </p>
                 </div>

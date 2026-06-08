@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Report Parcial Pentest</title>
+
+<style>
+@font-face {
+  font-family: "Rasa";
+  src: url("/fonts/Rasa-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Rasa";
+  src: url("/fonts/Rasa-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Rasa";
+  src: url("/fonts/Rasa-Italic.ttf") format("truetype");
+  font-style: italic;
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: #262626;
+  font-family: "Rasa", Georgia, serif;
+  font-size: 13px;
+  line-height: 1.1;
+}
+
+body {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.report-page {
+  position: relative;
+  width: 794px;
+  min-height: 1123px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #ffffff;
+  break-after: page;
+  page-break-after: always;
+}
+
+.report-page:last-child {
+  page-break-after: auto;
+}
+
+.cover-page,
+.brand-page,
+.summary-page,
+.closing-page {
+  height: 1123px;
+  min-height: 1123px;
+}
+
+.flow-page {
+  min-height: auto;
+  overflow: visible;
+  padding: 94px 0 96px;
+}
+
+.side-texture {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 342px;
+  height: 1123px;
+  object-fit: cover;
+  opacity: 0.72;
+}
+
+.cover-title {
+  position: absolute;
+  top: 241px;
+  left: 360px;
+  display: grid;
+  gap: 168px;
+  color: #262626;
+  font-size: 64px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.brand-square {
+  position: absolute;
+  left: 142px;
+  top: 509px;
+  width: 25px;
+  height: 25px;
+}
+
+.brand-rule {
+  position: absolute;
+  left: 167px;
+  top: 533px;
+  width: 627px;
+  height: 26px;
+  background: #12cfee;
+}
+
+.brand-badge {
+  position: absolute;
+  left: 712px;
+  top: 580px;
+  width: 65px;
+  height: auto;
+}
+
+.brand-logo {
+  position: absolute;
+  left: 142px;
+  top: 741px;
+  width: 151px;
+  height: auto;
+}
+
+.page-watermark {
+  position: absolute;
+  right: 8px;
+  color: #e7e6e6;
+  font-size: 64px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.watermark-scope {
+  top: 74px;
+}
+
+.watermark-results {
+  top: 463px;
+}
+
+.content-left {
+  left: 112px;
+  width: 620px;
+}
+
+.summary-scope-table {
+  position: absolute;
+  top: 207px;
+}
+
+.summary-copy {
+  position: absolute;
+  top: 565px;
+}
+
+.summary-results-table {
+  position: absolute;
+  top: 649px;
+}
+
+.summary-footnote {
+  position: absolute;
+  top: 944px;
+}
+
+.section-kicker {
+  margin: 0 0 22px;
+  color: #000000;
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.report-copy {
+  margin: 0;
+  color: #878786;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.16;
+}
+
+.docs-table {
+  width: 620px;
+  border-spacing: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.docs-table th,
+.docs-table td {
+  border: 0;
+  padding: 9px 9px;
+  vertical-align: top;
+}
+
+.docs-table th {
+  height: 50px;
+  color: #ffffff;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.docs-table th:first-child {
+  width: 217px;
+  background: #ff0000;
+}
+
+.docs-table th:last-child {
+  background: #00b0f0;
+}
+
+.docs-table td {
+  min-height: 44px;
+  color: #000000;
+  background: #f2f2f2;
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.severity-table {
+  margin-left: 110px;
+}
+
+.severity-table td {
+  min-height: 92px;
+  color: #262626;
+  font-size: 16px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.severity-table td:first-child {
+  width: 217px;
+  font-weight: 700;
+}
+
+.severity-table td:last-child {
+  width: 403px;
+}
+
+.vuln-section-title {
+  margin: 70px 0 58px 110px;
+  color: #000000;
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.vulnerability {
+  width: 620px;
+  margin: 0 0 46px 110px;
+}
+
+.vuln-heading {
+  margin: 0 0 22px 26px;
+  color: #000000;
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.vuln-summary {
+  margin-bottom: 24px;
+}
+
+.vuln-summary th:first-child {
+  width: 310px;
+  background: #2edcff;
+}
+
+.vuln-summary th:last-child {
+  width: 310px;
+  background: #ff0000;
+}
+
+.vuln-summary td:first-child,
+.vuln-summary td:last-child {
+  width: 310px;
+}
+
+.vuln-summary th,
+.vuln-summary td {
+  font-size: 16px;
+}
+
+.content-section {
+  margin: 22px 0;
+}
+
+.content-section h3 {
+  margin: 0 0 21px;
+  color: #000000;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rich-field,
+.rich-field p,
+.rich-field div {
+  margin: 0;
+  color: #878786;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.16;
+  white-space: pre-line;
+}
+
+.rich-field img {
+  display: block;
+  width: 100%;
+  max-width: 607px;
+  height: auto;
+  margin: 14px 0;
+  object-fit: contain;
+  border: 0;
+}
+
+.evidence-img {
+  display: block;
+  width: 100%;
+  max-width: 607px;
+  height: auto;
+  margin: 14px 0;
+  object-fit: contain;
+  border: 0;
+}
+
+.reference-list {
+  margin: 0;
+  padding: 0 0 0 72px;
+  color: #878786;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.18;
+}
+
+.reference-list li {
+  margin: 0 0 22px;
+  padding-left: 12px;
+}
+
+.poc-table {
+  width: 620px;
+  margin-top: 28px;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.poc-title {
+  height: 50px;
+  padding: 11px;
+  color: #ffffff;
+  background: #2edcff;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.poc-body {
+  padding: 11px;
+  background: #f2f2f2;
+}
+
+.closing-logo {
+  position: absolute;
+  left: 507px;
+  top: 558px;
+  width: 220px;
+  height: auto;
+}
+
+.social-bar {
+  position: absolute;
+  left: 353px;
+  top: 659px;
+  width: 441px;
+  height: 41px;
+  object-fit: fill;
+}
+
+.closing-badge {
+  position: absolute;
+  left: 672px;
+  top: 761px;
+  width: 65px;
+  height: auto;
+}
+
+.contact-card {
+  position: absolute;
+  left: 487px;
+  top: 1038px;
+  width: 250px;
+  height: auto;
+}
+</style>
+</head>
+
+<body>
+  <section class="report-page cover-page">
+    <img class="side-texture" src="/template/rafa/image5.jpg" alt="">
+    <div class="cover-title">
+      <div>REPORT</div>
+      <div>PARCIAL</div>
+      <div>PENTEST</div>
+    </div>
+  </section>
+
+  <section class="report-page brand-page">
+    <img class="brand-square" src="/template/rafa/image11.png" alt="">
+    <div class="brand-rule"></div>
+    <img class="brand-badge" src="/template/rafa/image15.png" alt="">
+    <img class="brand-logo" src="/template/rafa/image13.png" alt="OSTEC">
+  </section>
+
+  <section class="report-page summary-page">
+    <div class="page-watermark watermark-scope">ESCOPO</div>
+
+    <table class="docs-table summary-scope-table content-left">
+      <thead>
+        <tr>
+          <th>Alvo</th>
+          <th>Link/Login/Senha</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#alvos}}
+        <tr>
+          <td>{{descricao}}</td>
+          <td>{{url}} {{login}}</td>
+        </tr>
+        {{/alvos}}
+      </tbody>
+    </table>
+
+    <div class="page-watermark watermark-results">RESULTADOS</div>
+
+    <div class="summary-copy content-left">
+      <p class="section-kicker">Visão Geral das Descobertas:</p>
+      <p class="report-copy">
+        As seções seguintes apresentam as vulnerabilidades e problemas de implementação identificados durante o
+        período de testes. As descobertas são organizadas de acordo com o grau de gravidade e impacto.
+      </p>
+    </div>
+
+    <table class="docs-table summary-results-table content-left">
+      <thead>
+        <tr>
+          <th>Gravidade</th>
+          <th>Quantidade</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Critical</td><td>{{total_critical}}</td></tr>
+        <tr><td>High</td><td>{{total_high}}</td></tr>
+        <tr><td>Medium</td><td>{{total_medium}}</td></tr>
+        <tr><td>Low</td><td>{{total_low}}</td></tr>
+        <tr><td>Info</td><td>{{total_info}}</td></tr>
+      </tbody>
+    </table>
+
+    <p class="summary-footnote content-left report-copy">
+      Cada vulnerabilidade ou risco identificado foi classificado como uma descoberta e categorizado nas seguintes
+      categorias: Risco Crítico, Alto, Médio, Baixo ou Informacional, conforme as definições a seguir:
+    </p>
+  </section>
+
+  <section class="report-page flow-page">
+    <table class="docs-table severity-table">
+      <thead>
+        <tr>
+          <th>Gravidade</th>
+          <th>Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Critical</td>
+          <td>Estas vulnerabilidades devem ser tratadas com urgência, pois podem representar um risco imediato para a segurança das redes, sistemas ou dados. A exploração dessas vulnerabilidades não exige ferramentas ou técnicas avançadas, nem conhecimento especializado sobre o alvo.</td>
+        </tr>
+        <tr>
+          <td>High</td>
+          <td>Estas vulnerabilidades devem ser abordadas com urgência, pois podem representar um perigo imediato para a segurança das redes, sistemas ou dados. Embora a exploração geralmente seja mais complexa, ela pode resultar em permissões elevadas, perda de dados ou interrupções no funcionamento do sistema.</td>
+        </tr>
+        <tr>
+          <td>Medium</td>
+          <td>Estas vulnerabilidades devem ser tratadas prontamente. A exploração costuma ser difícil e pode exigir engenharia social, acesso prévio ou condições específicas.</td>
+        </tr>
+        <tr>
+          <td>Low</td>
+          <td>As vulnerabilidades devem ser registradas e tratadas posteriormente. Esses problemas oferecem poucas oportunidades ou informações para um invasor e podem não representar uma ameaça significativa.</td>
+        </tr>
+        <tr>
+          <td>Info</td>
+          <td>Esses problemas são meramente informativos e provavelmente não representam uma ameaça real.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="vuln-section-title">Vulnerabilidades Externas:</div>
+
+    {{#vulnerabilidades}}
+    <article class="vulnerability">
+      <h2 class="vuln-heading">{{titulo}}</h2>
+
+      <table class="docs-table vuln-summary">
+        <thead>
+          <tr>
+            <th>{{categoria}}</th>
+            <th>{{severidade}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>CVSS Points</td>
+            <td>{{cvss_score}}</td>
+          </tr>
+          <tr>
+            <td>Vetores</td>
+            <td>{{cvss_vector}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-section">
+        <h3>Descrição da Vulnerabilidade:</h3>
+        <div class="rich-field">{{descricao}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Ativo Afetado:</h3>
+        <div class="rich-field">{{ativo_afetado}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Referência:</h3>
+        <ul class="reference-list">
+          {{#referencias}}
+          <li>{{.}}</li>
+          {{/referencias}}
+          {{#cwe}}
+          <li>{{.}}</li>
+          {{/cwe}}
+        </ul>
+      </div>
+
+      <div class="content-section">
+        <h3>Impactos:</h3>
+        <div class="rich-field">{{impacto}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Ações para Reparo:</h3>
+        <div class="rich-field">{{recomendacao}}</div>
+      </div>
+
+      <table class="poc-table">
+        <tr>
+          <td class="poc-title">Proof Of Concept</td>
+        </tr>
+        <tr>
+          <td class="poc-body">
+            <div class="rich-field">{{poc_descricao}}</div>
+            <div class="rich-field">{{poc_codigo}}</div>
+          </td>
+        </tr>
+      </table>
+    </article>
+    {{/vulnerabilidades}}
+  </section>
+
+  {{#evidencias}}
+  <section class="report-page flow-page">
+    <article class="vulnerability">
+      <h2 class="vuln-heading">{{titulo}}</h2>
+      <div class="poc-body">
+        <div class="rich-field">{{descricao}}</div>
+        <img class="evidence-img" src="{{src}}" alt="{{descricao}}">
+      </div>
+    </article>
+  </section>
+  {{/evidencias}}
+
+  <section class="report-page closing-page">
+    <img class="side-texture" src="/template/rafa/image5.jpg" alt="">
+    <img class="closing-logo" src="/template/rafa/image13.png" alt="OSTEC">
+    <img class="social-bar" src="/template/rafa/image2.png" alt="">
+    <img class="closing-badge" src="/template/rafa/image15.png" alt="">
+    <img class="contact-card" src="/template/rafa/image23.png" alt="">
+  </section>
+</body>
+</html>

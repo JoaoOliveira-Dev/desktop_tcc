@@ -27,6 +27,7 @@ const App = () => (
         <Route path="/" element={<Dashboard />} />
         <Route path="/my-projects" element={<MeusProjetos />} />
         <Route path="/report" element={<Report />} />
+        <Route path="/report/:projectId" element={<Report />} />
 
         <Route path="/notes" element={<PentestNotes />} />
         <Route path="/notes/:projectId" element={<PentestNotes />} />
@@ -34,6 +35,7 @@ const App = () => (
         {/* <Route path="/generate-report" element={<PentestNotes />} /> */}
 
         <Route path="/generate-report" element={<AIReportGenerator />} />
+        <Route path="/ai-report-generator" element={<AIReportGenerator />} />
 
         <Route path="/api" element={<ApiTester />} />
         <Route path="/api/:projectId" element={<ApiTester />} />

@@ -216,7 +216,7 @@ export function NavMain() {
                   {/* Links do projeto */}
                   <SidebarMenuSubItem>
                     <SidebarMenuSubButton asChild>
-                      <a href={`/report`}>
+                      <a href={`/report/${project.id}`}>
                         <BookOpen size={16} className="mr-2" />
                         Relatórios
                       </a>
