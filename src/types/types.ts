@@ -6,12 +6,20 @@ export interface Alvo {
   export interface VulnType {
     id: string;
     nome: string;
+    titulo?: string;
+    categoria?: string;
+    subcategoria?: string;
+    owasp?: string;
+    cwe?: string;
     descVuln: string;
     ativos: string;
     referencia: string;
     impacto: string;
     reparo: string;
     poc: string;
+    pocLegenda?: string;
+    retestStatus?: string;
+    retestDescricao?: string;
     severidade: string;
     cvssData?: {
       attackVector: string;
@@ -27,6 +35,7 @@ export interface Alvo {
   }
   
   export interface CVSSCalculatorProps {
+    initialValue?: VulnType["cvssData"];
     onCalculate: (data: {
       attackVector: string;
       attackComplexity: string;

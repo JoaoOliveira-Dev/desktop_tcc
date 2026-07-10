@@ -12,6 +12,14 @@ contextBridge.exposeInMainWorld("electron", {
   editProject: (id, data) => ipcRenderer.invoke("edit-project", id, data),
   deleteProject: (id) => ipcRenderer.invoke("delete-project", id),
 
+  // Report Settings
+  getReportSettings: (projectId) =>
+    ipcRenderer.invoke("get-report-settings", projectId),
+  saveReportSettings: (settings) =>
+    ipcRenderer.invoke("save-report-settings", settings),
+  saveHtmlReportPdf: (html, filename) =>
+    ipcRenderer.invoke("save-html-report-pdf", { html, filename }),
+
   // Notes
   getNotes: (projectId) => ipcRenderer.invoke("get-notes", projectId),
   createNote: (note) => ipcRenderer.invoke("create-note", note),

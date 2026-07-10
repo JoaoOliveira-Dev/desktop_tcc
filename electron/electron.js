@@ -1,11 +1,51 @@
 const path = require("path");
 const fs = require("fs");
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const os = require("os");
+const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const sqlite3 = require("sqlite3").verbose();
 
 const isDev = process.env.IS_DEV === "true";
 
 let db; // conexão com sqlite
+
+function parseJsonArray(value) {
+  if (!value) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Erro ao interpretar JSON salvo:", error);
+    return [];
+  }
+}
+
+function serializeJsonArray(value) {
+  return JSON.stringify(Array.isArray(value) ? value : []);
+}
+
+function ensureReportSettingsColumns() {
+  db.all("PRAGMA table_info(report_settings)", (err, columns) => {
+    if (err) {
+      console.error("Erro ao verificar colunas de report_settings:", err);
+      return;
+    }
+
+    const existingColumns = new Set(columns.map((column) => column.name));
+
+    if (!existingColumns.has("alvos_json")) {
+      db.run(
+        "ALTER TABLE report_settings ADD COLUMN alvos_json TEXT DEFAULT '[]'"
+      );
+    }
+
+    if (!existingColumns.has("vulnerabilidades_json")) {
+      db.run(
+        "ALTER TABLE report_settings ADD COLUMN vulnerabilidades_json TEXT DEFAULT '[]'"
+      );
+    }
+  });
+}
 
 // Inicializa o banco
 function initDatabase() {
@@ -13,6 +53,8 @@ function initDatabase() {
   db = new sqlite3.Database(dbPath);
 
   db.serialize(() => {
+    db.run("PRAGMA foreign_keys = ON");
+
     db.run(`
       CREATE TABLE IF NOT EXISTS projects (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,6 +92,23 @@ function initDatabase() {
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
       );
     `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS report_settings (
+        project_id INTEGER PRIMARY KEY,
+        template_id TEXT DEFAULT 'rafa',
+        autor_nome TEXT DEFAULT '',
+        autor_cargo TEXT DEFAULT '',
+        autor_telefone TEXT DEFAULT '',
+        autor_email TEXT DEFAULT '',
+        alvos_json TEXT DEFAULT '[]',
+        vulnerabilidades_json TEXT DEFAULT '[]',
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      );
+    `);
+
+    ensureReportSettingsColumns();
   });
 }
 
@@ -138,6 +197,209 @@ ipcMain.handle("delete-project", (event, id) => {
       }
     });
   });
+});
+
+//
+// REPORT SETTINGS
+//
+ipcMain.handle("get-report-settings", async (_, projectId) => {
+  const targetProjectId = Number(projectId);
+
+  if (!Number.isFinite(targetProjectId)) {
+    return null;
+  }
+
+  return new Promise((resolve, reject) => {
+    db.get(
+      "SELECT * FROM report_settings WHERE project_id = ?",
+      [targetProjectId],
+      (err, row) => {
+        if (err) reject(err);
+        else if (!row) resolve(null);
+        else {
+          resolve({
+            project_id: row.project_id,
+            template_id: row.template_id || "rafa",
+            autor_nome: row.autor_nome || "",
+            autor_cargo: row.autor_cargo || "",
+            autor_telefone: row.autor_telefone || "",
+            autor_email: row.autor_email || "",
+            alvos: parseJsonArray(row.alvos_json),
+            vulnerabilidades: parseJsonArray(row.vulnerabilidades_json),
+          });
+        }
+      }
+    );
+  });
+});
+
+ipcMain.handle("save-report-settings", async (_, settings) => {
+  const shouldUpdateAlvos = Object.prototype.hasOwnProperty.call(
+    settings,
+    "alvos"
+  );
+  const shouldUpdateVulnerabilidades = Object.prototype.hasOwnProperty.call(
+    settings,
+    "vulnerabilidades"
+  );
+  const normalizedSettings = {
+    project_id: Number(settings.project_id),
+    template_id: settings.template_id || "rafa",
+    autor_nome: settings.autor_nome || "",
+    autor_cargo: settings.autor_cargo || "",
+    autor_telefone: settings.autor_telefone || "",
+    autor_email: settings.autor_email || "",
+    alvos: shouldUpdateAlvos && Array.isArray(settings.alvos) ? settings.alvos : [],
+    vulnerabilidades:
+      shouldUpdateVulnerabilidades && Array.isArray(settings.vulnerabilidades)
+        ? settings.vulnerabilidades
+        : [],
+  };
+
+  if (!Number.isFinite(normalizedSettings.project_id)) {
+    throw new Error("Projeto inválido para salvar as configurações do relatório.");
+  }
+
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE report_settings
+       SET template_id = ?,
+           autor_nome = ?,
+           autor_cargo = ?,
+           autor_telefone = ?,
+           autor_email = ?,
+           alvos_json = COALESCE(?, alvos_json),
+           vulnerabilidades_json = COALESCE(?, vulnerabilidades_json),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE project_id = ?`,
+      [
+        normalizedSettings.template_id,
+        normalizedSettings.autor_nome,
+        normalizedSettings.autor_cargo,
+        normalizedSettings.autor_telefone,
+        normalizedSettings.autor_email,
+        shouldUpdateAlvos ? serializeJsonArray(normalizedSettings.alvos) : null,
+        shouldUpdateVulnerabilidades
+          ? serializeJsonArray(normalizedSettings.vulnerabilidades)
+          : null,
+        normalizedSettings.project_id,
+      ],
+      function (err) {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        if (this.changes > 0) {
+          resolve(normalizedSettings);
+          return;
+        }
+
+        db.run(
+          `INSERT INTO report_settings (
+            project_id,
+            template_id,
+            autor_nome,
+            autor_cargo,
+            autor_telefone,
+            autor_email,
+            alvos_json,
+            vulnerabilidades_json
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            normalizedSettings.project_id,
+            normalizedSettings.template_id,
+            normalizedSettings.autor_nome,
+            normalizedSettings.autor_cargo,
+            normalizedSettings.autor_telefone,
+            normalizedSettings.autor_email,
+            serializeJsonArray(normalizedSettings.alvos),
+            serializeJsonArray(normalizedSettings.vulnerabilidades),
+          ],
+          (insertErr) => {
+            if (insertErr) reject(insertErr);
+            else resolve(normalizedSettings);
+          }
+        );
+      }
+    );
+  });
+});
+
+ipcMain.handle("save-html-report-pdf", async (event, { html, filename }) => {
+  const parentWindow = BrowserWindow.fromWebContents(event.sender);
+  const saveDialogOptions = {
+    defaultPath: filename || "relatorio-pentest.pdf",
+    filters: [{ name: "PDF", extensions: ["pdf"] }],
+  };
+  const { canceled, filePath } = parentWindow
+    ? await dialog.showSaveDialog(parentWindow, saveDialogOptions)
+    : await dialog.showSaveDialog(saveDialogOptions);
+
+  if (canceled || !filePath) {
+    return { canceled: true };
+  }
+
+  const reportWindow = new BrowserWindow({
+    show: false,
+    width: 794,
+    height: 1123,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  const tempDir = await fs.promises.mkdtemp(
+    path.join(os.tmpdir(), "desktop-tcc-report-")
+  );
+  const tempHtmlPath = path.join(tempDir, "report.html");
+
+  try {
+    await fs.promises.writeFile(tempHtmlPath, html, "utf8");
+    await reportWindow.loadFile(tempHtmlPath);
+    await reportWindow.webContents.executeJavaScript(
+      `
+        new Promise(async (resolve) => {
+          try {
+            if (document.fonts && document.fonts.ready) {
+              await document.fonts.ready;
+            }
+
+            await Promise.all(
+              Array.from(document.images).map((image) => {
+                if (image.complete) return Promise.resolve();
+                return new Promise((imageResolve) => {
+                  image.onload = imageResolve;
+                  image.onerror = imageResolve;
+                });
+              })
+            );
+
+            requestAnimationFrame(() => requestAnimationFrame(resolve));
+          } catch {
+            resolve();
+          }
+        });
+      `,
+      true
+    );
+
+    const pdfData = await reportWindow.webContents.printToPDF({
+      printBackground: true,
+      preferCSSPageSize: true,
+      pageSize: "A4",
+      margins: {
+        marginType: "none",
+      },
+    });
+
+    await fs.promises.writeFile(filePath, pdfData);
+    return { canceled: false, filePath };
+  } finally {
+    reportWindow.destroy();
+    fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+  }
 });
 
 //

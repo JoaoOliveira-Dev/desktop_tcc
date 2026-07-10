@@ -71,16 +71,32 @@ const data = {
 
     {
       title: "Listas",
-      url: "#",
+      url: "/listas",
       icon: ScrollText,
       items: [
         {
+          title: "Todas as listas",
+          url: "/listas",
+        },
+        {
           title: "Google dorks",
-          url: "#",
+          url: "/listas/google-dorks",
         },
         {
           title: "Links",
-          url: "#",
+          url: "/listas/links",
+        },
+        {
+          title: "Recon",
+          url: "/listas/recon",
+        },
+        {
+          title: "Wordlists",
+          url: "/listas/wordlists",
+        },
+        {
+          title: "Checklists",
+          url: "/listas/checklists",
         },
         {
           title: "XSS",
@@ -100,15 +116,15 @@ const data = {
         },
         {
           title: "SQLi",
-          url: "#",
+          url: "/listas/sqli",
         },
         {
           title: "LFI",
-          url: "#",
+          url: "/listas/lfi",
         },
         {
           title: "RCE",
-          url: "#",
+          url: "/listas/rce",
         },
         {
           title: "Subdomain Takeover",
@@ -116,15 +132,23 @@ const data = {
         },
         {
           title: "XXE",
-          url: "#",
+          url: "/listas/xxe",
         },
         {
           title: "SSRF",
-          url: "#",
+          url: "/listas/ssrf",
         },
         {
           title: "SSTI",
-          url: "#",
+          url: "/listas/ssti",
+        },
+        {
+          title: "Pós-exploração",
+          url: "/listas/post-exploitation",
+        },
+        {
+          title: "Labs",
+          url: "/listas/labs",
         },
       ],
     },

@@ -42,6 +42,9 @@ export interface ReportData {
   vulnerabilidades: Array<{
     titulo: string;
     categoria: string | null;
+    subcategoria?: string | null;
+    owasp?: string | null;
+    cwe?: string | null;
     severidade: 'critical' | 'high' | 'medium' | 'low' | 'info';
     cvss_score: string | number | null;
     cvss_vector: string | null;
@@ -50,9 +53,11 @@ export interface ReportData {
     impacto: string | null;
     recomendacao: string | null;
     referencias: string[];
-    cwe: string[];
     poc_descricao: string | null;
+    poc_legenda?: string | null;
     poc_codigo: string | null;
+    retest_status?: string | null;
+    retest_descricao?: string | null;
   }>;
   evidencias?: Array<{
     titulo: string;
@@ -101,19 +106,27 @@ REGRAS OBRIGATÓRIAS
 - Se houver múltiplos alvos, liste todos
 - Referências devem ser URLs completas quando possível
 - Preserve fidelidade técnica do conteúdo original
+- Escreva em terceira pessoa, com tom formal e objetivo
+- O título de cada vulnerabilidade deve ser específico, indicando o ponto afetado quando essa informação existir
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CLASSIFICAÇÃO CWE (OBRIGATÓRIO)
+PADRÃO DE ESCRITA DO RELATÓRIO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Para cada vulnerabilidade:
 
-1. Identifique a causa raiz técnica
-2. Associe ao CWE MAIS ESPECÍFICO possível
-3. Use formato oficial: CWE-79, CWE-89 etc.
-4. Evite CWEs genéricos se houver específico
-5. Pode haver múltiplos CWEs
-6. Se não for possível determinar com confiança → array vazio
+- "titulo": descreva a falha de forma acionável. Evite apenas o nome genérico da vulnerabilidade.
+- "categoria": use a família da falha, alinhada ao OWASP Top 10 quando possível.
+- "subcategoria": especifique o tipo, por exemplo Stored, Reflected, IDOR, SPF permissivo ou TLS fraco.
+- "owasp": informe o item do OWASP Top 10 quando aplicável.
+- "cwe": informe a CWE quando aplicável.
+- "descricao": explique primeiro a vulnerabilidade de forma geral e depois como ela aparece no ambiente analisado.
+- "impacto": divida o texto em "Impacto Técnico" e "Impacto de Negócio".
+- "recomendacao": descreva medidas claras de mitigação, preferencialmente úteis para desenvolvimento/operação.
+- "poc_descricao": registre a prova de conceito de forma objetiva, com passos e evidências observadas.
+- "poc_legenda": use uma legenda curta no formato "Figura: ...", se houver evidência.
+- "retest_status": use Corrigido, Corrigido parcialmente, Não corrigido, Não validado ou Não aplicável.
+- "retest_descricao": descreva o resultado do re-test quando essa informação existir.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 REFERÊNCIAS TÉCNICAS (OBRIGATÓRIO)
@@ -128,11 +141,10 @@ Para cada vulnerabilidade, forneça referências que ajudem o cliente a:
 Prioridade de fontes:
 
 1. OWASP
-2. MITRE CWE
-3. PortSwigger Web Security Academy
-4. NIST / NVD
-5. Documentação oficial do fabricante
-6. RFC técnicas
+2. PortSwigger Web Security Academy
+3. NIST / NVD
+4. Documentação oficial do fabricante
+5. RFC técnicas
 
 Regras:
 
@@ -182,7 +194,6 @@ INFERÊNCIA PERMITIDA
 Permitido inferir apenas:
 
 - Severidade quando não informada
-- CWE compatível com a falha
 - CVSS estimado
 - Referências técnicas adequadas
 
@@ -223,6 +234,9 @@ SCHEMA
     {
       "titulo": string,
       "categoria": string | null,
+      "subcategoria": string | null,
+      "owasp": string | null,
+      "cwe": string | null,
       "severidade": "critical" | "high" | "medium" | "low" | "info",
       "cvss_score": number | null,
       "cvss_vector": string | null,
@@ -231,9 +245,11 @@ SCHEMA
       "impacto": string | null,
       "recomendacao": string | null,
       "referencias": string[],
-      "cwe": string[],
       "poc_descricao": string | null,
-      "poc_codigo": string | null
+      "poc_legenda": string | null,
+      "poc_codigo": string | null,
+      "retest_status": string | null,
+      "retest_descricao": string | null
     }
   ],
 
@@ -487,7 +503,7 @@ export function fillReportTemplate(templateHtml: string, data: ReportData): stri
   html = replaceScalar(html, 'autor_telefone', data.autor_telefone);
   html = replaceScalar(html, 'autor_email', data.autor_email);
 
-  return html;
+  return removeUnresolvedTemplateTags(html);
 }
 
 function substituirSecaoIteravel(html: string, sectionName: string, items: any[] = []): string {
@@ -515,7 +531,7 @@ function substituirSecaoIteravel(html: string, sectionName: string, items: any[]
             );
           }
         }
-        return itemHtml;
+        return removeUnresolvedTemplateTags(itemHtml);
       })
       .join('');
   });
@@ -533,10 +549,16 @@ function formatTemplateValue(value: unknown, richText = false) {
 
 function formatRichTextValue(value: string) {
   if (/<\/?[a-z][\s\S]*>/i.test(value)) {
-    return value;
+    return applyMarkdownBold(value);
   }
 
-  return escapeHtml(value).replace(/\r\n|\r|\n/g, '<br>');
+  return applyMarkdownBold(escapeHtml(value)).replace(/\r\n|\r|\n/g, '<br>');
+}
+
+function applyMarkdownBold(value: string) {
+  return value
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
 }
 
 function isRichTextKey(key: string) {
@@ -547,7 +569,14 @@ function isRichTextKey(key: string) {
     'recomendacao',
     'poc_descricao',
     'poc_codigo',
+    'retest_descricao',
   ].includes(key);
+}
+
+function removeUnresolvedTemplateTags(html: string) {
+  return html
+    .replace(/\{\{#[^}]+\}\}[\s\S]*?\{\{\/[^}]+\}\}/g, '')
+    .replace(/\{\{\/?[^}]+\}\}/g, '');
 }
 
 function escapeHtml(value: string) {

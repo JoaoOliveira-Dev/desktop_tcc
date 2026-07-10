@@ -3,6 +3,13 @@ import { ReportData } from "@/lib/pdfProcessor";
 
 type Severity = "critical" | "high" | "medium" | "low" | "info";
 
+export type TechnicalResponsible = {
+  nome: string;
+  cargo: string;
+  telefone: string;
+  email: string;
+};
+
 const severityMap: Record<string, Severity> = {
   critical: "critical",
   critico: "critical",
@@ -17,6 +24,8 @@ const severityMap: Record<string, Severity> = {
   info: "info",
   informational: "info",
   informacional: "info",
+  informativo: "info",
+  informativa: "info",
 };
 
 export function normalizeSeverity(value?: string | null): Severity {
@@ -44,7 +53,8 @@ export function buildCvssVector(vuln: VulnType) {
 export function createReportDataFromManualInput(
   alvos: Alvo[],
   vulns: VulnType[],
-  projectName?: string
+  projectName?: string,
+  technicalResponsible?: TechnicalResponsible
 ): ReportData {
   const counts = {
     critical: 0,
@@ -84,8 +94,11 @@ export function createReportDataFromManualInput(
       descricao: String(index + 1).padStart(2, "0"),
     })),
     vulnerabilidades: vulns.map((vuln, index) => ({
-      titulo: `${index + 1}. ${vuln.nome}`,
-      categoria: vuln.nome,
+      titulo: `${index + 1}. ${vuln.titulo?.trim() || vuln.nome}`,
+      categoria: vuln.categoria?.trim() || vuln.nome,
+      subcategoria: vuln.subcategoria?.trim() || "",
+      owasp: vuln.owasp?.trim() || "",
+      cwe: vuln.cwe?.trim() || "",
       severidade: normalizeSeverity(vuln.severidade),
       cvss_score: vuln.cvssData?.score ?? "",
       cvss_vector: buildCvssVector(vuln),
@@ -97,15 +110,17 @@ export function createReportDataFromManualInput(
         .split(/\r?\n/)
         .map((item) => item.trim())
         .filter(Boolean),
-      cwe: [],
       poc_descricao: vuln.poc,
+      poc_legenda: vuln.pocLegenda?.trim() || "",
       poc_codigo: "",
+      retest_status: vuln.retestStatus?.trim() || "",
+      retest_descricao: vuln.retestDescricao || "",
     })),
     evidencias: [],
-    autor_nome: "",
-    autor_cargo: "",
-    autor_telefone: "",
-    autor_email: "",
+    autor_nome: technicalResponsible?.nome.trim() || "",
+    autor_cargo: technicalResponsible?.cargo.trim() || "",
+    autor_telefone: technicalResponsible?.telefone.trim() || "",
+    autor_email: technicalResponsible?.email.trim() || "",
   };
 }
 

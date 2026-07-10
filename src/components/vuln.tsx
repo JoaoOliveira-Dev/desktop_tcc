@@ -31,7 +31,17 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { vulnerabilidadesIniciais } from "../utils/vulns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  vulnerabilidadesIniciais,
+  type VulnerabilityPreset,
+} from "../utils/vulns";
 import { VulnType } from "../types/types";
 import CVSSCalculator from "./cvsscalculator";
 import RichTextEditor from "./richTextEditor";
@@ -52,12 +62,20 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
 
   // Estados para controlar as informações da vulnerabilidade selecionada
   const [nome, setNome] = React.useState("");
+  const [titulo, setTitulo] = React.useState("");
+  const [categoria, setCategoria] = React.useState("");
+  const [subcategoria, setSubcategoria] = React.useState("");
+  const [owasp, setOwasp] = React.useState("");
+  const [cwe, setCwe] = React.useState("");
   const [descVuln, setDescVuln] = React.useState("");
   const [ativos, setAtivos] = React.useState("");
   const [referencia, setReferencia] = React.useState("");
   const [impacto, setImpacto] = React.useState("");
   const [reparo, setReparo] = React.useState("");
   const [poc, setPoc] = React.useState("");
+  const [pocLegenda, setPocLegenda] = React.useState("");
+  const [retestStatus, setRetestStatus] = React.useState("");
+  const [retestDescricao, setRetestDescricao] = React.useState("");
   const [currentCvssData, setCurrentCvssData] =
     React.useState<VulnType["cvssData"]>(undefined);
   const [currentSeverity, setCurrentSeverity] = React.useState("");
@@ -68,12 +86,20 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
     setEditingId(null);
     setValue("");
     setNome("");
+    setTitulo("");
+    setCategoria("");
+    setSubcategoria("");
+    setOwasp("");
+    setCwe("");
     setDescVuln("");
     setAtivos("");
     setReferencia("");
     setImpacto("");
     setReparo("");
     setPoc("");
+    setPocLegenda("");
+    setRetestStatus("");
+    setRetestDescricao("");
     setCurrentCvssData(undefined);
     setCurrentSeverity("");
   }
@@ -95,12 +121,20 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
     const vulnerability: VulnType = {
       id: editingId ?? crypto.randomUUID(),
       nome,
+      titulo: titulo.trim() || nome,
+      categoria,
+      subcategoria,
+      owasp,
+      cwe,
       descVuln,
       ativos,
       referencia,
       impacto,
       reparo,
       poc,
+      pocLegenda,
+      retestStatus,
+      retestDescricao,
       severidade: severity,
       cvssData: selectedCvssData,
     };
@@ -128,27 +162,43 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
 
   // Função para determinar a severidade com base na pontuação CVSS
   const getSeverityFromScore = (score: number): string => {
+    if (score <= 0) return "Info";
     if (score >= 9.0) return "Critical";
     if (score >= 7.0) return "High";
     if (score >= 4.0) return "Medium";
     return "Low";
   };
 
-  function selectTemplateVulnerability(vulnerability: any, currentValue: string) {
+  function selectTemplateVulnerability(
+    vulnerability: VulnerabilityPreset,
+    currentValue: string
+  ) {
     const nextValue = currentValue === value ? "" : currentValue;
 
     setEditingId(null);
     setValue(nextValue);
     setOpen(false);
     setNome(nextValue ? vulnerability.value : "");
+    setTitulo(nextValue ? vulnerability.titulo || vulnerability.value : "");
+    setCategoria(nextValue ? vulnerability.categoria || "" : "");
+    setSubcategoria(nextValue ? vulnerability.subcategoria || "" : "");
+    setOwasp(nextValue ? vulnerability.owasp || "" : "");
+    setCwe(nextValue ? vulnerability.cwe || "" : "");
     setDescVuln(nextValue ? vulnerability.desc || "" : "");
     setReferencia(nextValue ? vulnerability.referencia || "" : "");
     setAtivos("");
-    setImpacto("");
-    setReparo("");
-    setPoc("");
-    setCurrentCvssData(undefined);
-    setCurrentSeverity("");
+    setImpacto(nextValue ? vulnerability.impacto || "" : "");
+    setReparo(nextValue ? vulnerability.reparo || "" : "");
+    setPoc(nextValue ? vulnerability.poc || "" : "");
+    setPocLegenda(nextValue ? vulnerability.pocLegenda || "" : "");
+    setRetestStatus(nextValue ? vulnerability.retestStatus || "" : "");
+    setRetestDescricao(nextValue ? vulnerability.retestDescricao || "" : "");
+    setCurrentCvssData(nextValue ? vulnerability.cvssData : undefined);
+    setCurrentSeverity(
+      nextValue && vulnerability.cvssData
+        ? getSeverityFromScore(vulnerability.cvssData.score)
+        : ""
+    );
   }
 
   function editVulnerability(vulnerability: VulnType) {
@@ -164,12 +214,20 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
     setEditingId(vulnerability.id);
     setValue(vulnerability.nome);
     setNome(vulnerability.nome);
+    setTitulo(vulnerability.titulo || vulnerability.nome);
+    setCategoria(vulnerability.categoria || "");
+    setSubcategoria(vulnerability.subcategoria || "");
+    setOwasp(vulnerability.owasp || "");
+    setCwe(vulnerability.cwe || "");
     setDescVuln(vulnerability.descVuln);
     setAtivos(vulnerability.ativos);
     setReferencia(vulnerability.referencia);
     setImpacto(vulnerability.impacto);
     setReparo(vulnerability.reparo);
     setPoc(vulnerability.poc);
+    setPocLegenda(vulnerability.pocLegenda || "");
+    setRetestStatus(vulnerability.retestStatus || "");
+    setRetestDescricao(vulnerability.retestDescricao || "");
     setCurrentCvssData(vulnerability.cvssData);
     setCurrentSeverity(vulnerability.severidade);
   }
@@ -184,6 +242,22 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
       setVulnerabilidades([...vulnerabilidades, novaVulnerabilidade]);
       setValue(novaVuln);
       setNome(novaVuln);
+      setTitulo(novaVuln);
+      setCategoria("");
+      setSubcategoria("");
+      setOwasp("");
+      setCwe("");
+      setDescVuln("");
+      setAtivos("");
+      setReferencia("");
+      setImpacto("");
+      setReparo("");
+      setPoc("");
+      setPocLegenda("");
+      setRetestStatus("");
+      setRetestDescricao("");
+      setCurrentCvssData(undefined);
+      setCurrentSeverity("");
       setNovaVuln("");
       setOpen(false);
     }
@@ -277,8 +351,60 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
                 atualizar a linha selecionada.
               </div>
             )}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="vuln-title">Título no relatório</Label>
+                <Input
+                  id="vuln-title"
+                  value={titulo}
+                  onChange={(event) => setTitulo(event.target.value)}
+                  placeholder="Ex: Aplicação suscetível a XSS no parâmetro nome"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="vuln-category">Categoria</Label>
+                <Input
+                  id="vuln-category"
+                  value={categoria}
+                  onChange={(event) => setCategoria(event.target.value)}
+                  placeholder="Ex: A03: Injection"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="vuln-subcategory">Subcategoria</Label>
+                <Input
+                  id="vuln-subcategory"
+                  value={subcategoria}
+                  onChange={(event) => setSubcategoria(event.target.value)}
+                  placeholder="Ex: Reflected XSS"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="vuln-owasp">OWASP</Label>
+                <Input
+                  id="vuln-owasp"
+                  value={owasp}
+                  onChange={(event) => setOwasp(event.target.value)}
+                  placeholder="Ex: OWASP Top 10 2021 - A01"
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="vuln-cwe">CWE</Label>
+                <Input
+                  id="vuln-cwe"
+                  value={cwe}
+                  onChange={(event) => setCwe(event.target.value)}
+                  placeholder="Ex: CWE-79"
+                />
+              </div>
+            </div>
+
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="link">Descrição da vulnerabilidade</Label>
+              <Label htmlFor="vuln-description">Descrição da vulnerabilidade</Label>
               <RichTextEditor
                 placeholder="Anote a DESCRIÇÃO da vulnerabilidade"
                 value={descVuln}
@@ -286,7 +412,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="link">Ativo afetado</Label>
+              <Label htmlFor="vuln-assets">Ativo afetado</Label>
               <RichTextEditor
                 placeholder="Anote os ATIVOS da vulnerabilidade"
                 value={ativos}
@@ -294,7 +420,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="link">Referência</Label>
+              <Label htmlFor="vuln-reference">Referência</Label>
               <RichTextEditor
                 placeholder="Anote as REFERÊNCIAS da vulnerabilidade"
                 value={referencia}
@@ -302,7 +428,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="link">Impacto</Label>
+              <Label htmlFor="vuln-impact">Impacto</Label>
               <RichTextEditor
                 placeholder="Anote os IMPACTOS da vulnerabilidade"
                 value={impacto}
@@ -310,7 +436,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="link">Ação de reparo</Label>
+              <Label htmlFor="vuln-remediation">Mitigação / Ação de reparo</Label>
               <RichTextEditor
                 placeholder="Anote as AÇÕES DE REPARO da vulnerabilidade"
                 value={reparo}
@@ -318,13 +444,54 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="link">Proof Of Concept</Label>
+              <Label htmlFor="vuln-poc">Proof Of Concept</Label>
               <RichTextEditor
                 placeholder="Anote as PROVAS DE CONCEITO da vulnerabilidade"
                 value={poc}
                 onChange={setPoc}
                 minHeight="min-h-[220px]"
               />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="vuln-poc-caption">Legenda da PoC</Label>
+              <Input
+                id="vuln-poc-caption"
+                value={pocLegenda}
+                onChange={(event) => setPocLegenda(event.target.value)}
+                placeholder="Ex: Figura: Evidência da exploração no parâmetro nome"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-[240px_1fr]">
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="vuln-retest-status">Status do re-test</Label>
+                <Select value={retestStatus} onValueChange={setRetestStatus}>
+                  <SelectTrigger id="vuln-retest-status">
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Não validado">Não validado</SelectItem>
+                    <SelectItem value="Não corrigido">Não corrigido</SelectItem>
+                    <SelectItem value="Corrigido parcialmente">
+                      Corrigido parcialmente
+                    </SelectItem>
+                    <SelectItem value="Corrigido">Corrigido</SelectItem>
+                    <SelectItem value="Não aplicável">Não aplicável</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col space-y-1.5">
+                <Label htmlFor="vuln-retest-description">
+                  Descrição do re-test
+                </Label>
+                <RichTextEditor
+                  placeholder="Anote o resultado do RE-TEST da vulnerabilidade"
+                  value={retestDescricao}
+                  onChange={setRetestDescricao}
+                  minHeight="min-h-[120px]"
+                />
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -343,14 +510,18 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
                 </span>
               )}
             </div>
-            <CVSSCalculator onCalculate={handleCVSSCalculation} />
+            <CVSSCalculator
+              initialValue={currentCvssData}
+              onCalculate={handleCVSSCalculation}
+            />
           </form>
         )}
         {/* Lista de Vulnerabilidades Adicionadas */}
 
         <Table className="mt-6">
           <TableHead className="w-[100px] text-center">#</TableHead>
-          <TableHead>Vulnerabilidades</TableHead>
+          <TableHead>Título no relatório</TableHead>
+          <TableHead>Tipo</TableHead>
           <TableHead>Risco</TableHead>
           <TableBody>
             {vulns.length > 0 ? (
@@ -363,6 +534,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
                   <TableCell className="text-center font-medium">
                     {String(index + 1).padStart(2, "0")}
                   </TableCell>
+                  <TableCell>{vuln.titulo || vuln.nome}</TableCell>
                   <TableCell>{vuln.nome}</TableCell>
                   <TableCell>{vuln.severidade}</TableCell>
                   <TableCell className="text-center">
@@ -383,7 +555,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={2} className="text-center">
+                <TableCell colSpan={5} className="text-center">
                   Nenhuma vulnerabilidade adicionada.
                 </TableCell>
               </TableRow>

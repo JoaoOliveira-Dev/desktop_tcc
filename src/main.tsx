@@ -17,6 +17,7 @@ import SubdomainTakeoverPage from "./pages/subdomainTakeover";
 import PentestNotes from "./pages/notes";
 import ForbidenBypassPage from "./pages/forbidenBypass";
 import AIReportGenerator from "./pages/aiReportGenerator";
+import PentestListsPage from "./pages/pentestLists";
 
 
 const App = () => (
@@ -42,6 +43,8 @@ const App = () => (
 
         <Route path="/payload-generator" element={<PayloadGenerator />} />
         <Route path="/encoder-decoder" element={<EncoderDecoder />} />
+        <Route path="/listas" element={<PentestListsPage />} />
+        <Route path="/listas/:categorySlug" element={<PentestListsPage />} />
         <Route path="/xss" element={<XSSPage />} />
         <Route path="/csrf" element={<CSRFPage />} />
         <Route path="/clickjacking" element={<ClickJackingPage />} />

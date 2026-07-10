@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -23,13 +24,31 @@ import {
 import { Alvo, VulnType } from "../types/types";
 import { cn } from "@/lib/utils";
 import { fillReportTemplate } from "@/lib/pdfProcessor";
-import { createReportDataFromManualInput } from "@/lib/reportData";
+import {
+  createReportDataFromManualInput,
+  type TechnicalResponsible,
+} from "@/lib/reportData";
 import {
   getReportTemplate,
   reportTemplates,
   type ReportTemplateId,
 } from "@/lib/reportTemplates";
 import { downloadHtmlFile, downloadPdfFromHtml } from "@/lib/htmlReport";
+
+const DEFAULT_REPORT_TEMPLATE_ID: ReportTemplateId = "rafa";
+
+function createEmptyTechnicalResponsible(): TechnicalResponsible {
+  return {
+    nome: "",
+    cargo: "",
+    telefone: "",
+    email: "",
+  };
+}
+
+function isReportTemplateId(value?: string | null): value is ReportTemplateId {
+  return reportTemplates.some((template) => template.id === value);
+}
 
 export default function Report() {
   const { projectId } = useParams();
@@ -38,23 +57,134 @@ export default function Report() {
   const [isClient, setIsClient] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] =
-    useState<ReportTemplateId>("rafa");
+    useState<ReportTemplateId>(DEFAULT_REPORT_TEMPLATE_ID);
   const [generatedHtml, setGeneratedHtml] = useState("");
   const [templateError, setTemplateError] = useState("");
   const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
+  const [reportSettingsLoaded, setReportSettingsLoaded] = useState(false);
+  const [technicalResponsible, setTechnicalResponsible] =
+    useState<TechnicalResponsible>(createEmptyTechnicalResponsible);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId) {
+      setProjectName("");
+      setAlvos([]);
+      setVulns([]);
+      setGeneratedHtml("");
+      setSelectedTemplateId(DEFAULT_REPORT_TEMPLATE_ID);
+      setTechnicalResponsible(createEmptyTechnicalResponsible());
+      setReportSettingsLoaded(true);
+      return;
+    }
+
+    const numericProjectId = Number(projectId);
+
+    if (!Number.isFinite(numericProjectId)) {
+      setAlvos([]);
+      setVulns([]);
+      setReportSettingsLoaded(true);
+      return;
+    }
+
+    let isCurrent = true;
+    setReportSettingsLoaded(false);
+    setGeneratedHtml("");
 
     window.electron?.getProjects?.().then((projects) => {
+      if (!isCurrent) return;
       const project = projects.find((item) => item.id === Number(projectId));
       setProjectName(project?.name ?? "");
     });
+
+    const settingsPromise =
+      window.electron?.getReportSettings?.(numericProjectId);
+
+    if (!settingsPromise) {
+      setAlvos([]);
+      setVulns([]);
+      setSelectedTemplateId(DEFAULT_REPORT_TEMPLATE_ID);
+      setTechnicalResponsible(createEmptyTechnicalResponsible());
+      setReportSettingsLoaded(true);
+      return;
+    }
+
+    settingsPromise
+      .then((settings) => {
+        if (!isCurrent) return;
+
+        if (!settings) {
+          setAlvos([]);
+          setVulns([]);
+          setSelectedTemplateId(DEFAULT_REPORT_TEMPLATE_ID);
+          setTechnicalResponsible(createEmptyTechnicalResponsible());
+          return;
+        }
+
+        setAlvos(settings.alvos || []);
+        setVulns(settings.vulnerabilidades || []);
+        setSelectedTemplateId(
+          isReportTemplateId(settings.template_id)
+            ? settings.template_id
+            : DEFAULT_REPORT_TEMPLATE_ID
+        );
+        setTechnicalResponsible({
+          nome: settings.autor_nome || "",
+          cargo: settings.autor_cargo || "",
+          telefone: settings.autor_telefone || "",
+          email: settings.autor_email || "",
+        });
+      })
+      .catch((error) => {
+        console.error("Erro ao carregar configurações do relatório:", error);
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setReportSettingsLoaded(true);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
   }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId || !reportSettingsLoaded) return;
+
+    const numericProjectId = Number(projectId);
+
+    if (!Number.isFinite(numericProjectId)) return;
+
+    const timeoutId = window.setTimeout(() => {
+      window.electron
+        ?.saveReportSettings?.({
+          project_id: numericProjectId,
+          template_id: selectedTemplateId,
+          autor_nome: technicalResponsible.nome,
+          autor_cargo: technicalResponsible.cargo,
+          autor_telefone: technicalResponsible.telefone,
+          autor_email: technicalResponsible.email,
+          alvos,
+          vulnerabilidades: vulns,
+        })
+        .catch((error) => {
+          console.error("Erro ao salvar configurações do relatório:", error);
+        });
+    }, 400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    projectId,
+    reportSettingsLoaded,
+    selectedTemplateId,
+    technicalResponsible,
+    alvos,
+    vulns,
+  ]);
 
   if (!isClient) {
     return null;
@@ -74,6 +204,16 @@ export default function Report() {
     }
   };
 
+  const handleResponsibleChange = (
+    field: keyof TechnicalResponsible,
+    value: string
+  ) => {
+    setTechnicalResponsible((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
   const buildTemplateHtml = async () => {
     const selectedTemplate = getReportTemplate(selectedTemplateId);
     const response = await fetch(selectedTemplate.path);
@@ -87,7 +227,8 @@ export default function Report() {
     const reportData = createReportDataFromManualInput(
       alvos,
       vulns,
-      projectName
+      projectName,
+      technicalResponsible
     );
     const templateHtml = await response.text();
     return fillReportTemplate(templateHtml, reportData);
@@ -115,7 +256,7 @@ export default function Report() {
       setIsGeneratingTemplate(true);
       const html = await buildTemplateHtml();
       setGeneratedHtml(html);
-      downloadHtmlFile(html, "relatorio-pentest.html");
+      await downloadHtmlFile(html, "relatorio-pentest.html");
     } catch (error) {
       setTemplateError(
         error instanceof Error ? error.message : "Erro ao baixar HTML."
@@ -183,18 +324,21 @@ export default function Report() {
             <Button
               variant="outline"
               onClick={handleGeneratePreview}
-              disabled={isGeneratingTemplate}
+              disabled={isGeneratingTemplate || !reportSettingsLoaded}
             >
               Pré-visualizar
             </Button>
             <Button
               variant="secondary"
               onClick={handleDownloadHtml}
-              disabled={isGeneratingTemplate}
+              disabled={isGeneratingTemplate || !reportSettingsLoaded}
             >
               Baixar HTML
             </Button>
-            <Button onClick={handleDownloadPdf} disabled={isGeneratingTemplate}>
+            <Button
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingTemplate || !reportSettingsLoaded}
+            >
               Baixar PDF
             </Button>
           </div>
@@ -205,6 +349,69 @@ export default function Report() {
             {templateError}
           </div>
         )}
+
+        <Card className="mx-6 mb-6 border-gray-200 dark:border-gray-800">
+          <CardHeader>
+            <CardTitle>Responsável Técnico</CardTitle>
+            <CardDescription>
+              Esses dados serão exibidos na seção final do relatório.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="responsavel-nome">Nome</Label>
+              <Input
+                id="responsavel-nome"
+                value={technicalResponsible.nome}
+                onChange={(event) =>
+                  handleResponsibleChange("nome", event.target.value)
+                }
+                placeholder="Ex: João Silva"
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="responsavel-cargo">Cargo</Label>
+              <Input
+                id="responsavel-cargo"
+                value={technicalResponsible.cargo}
+                onChange={(event) =>
+                  handleResponsibleChange("cargo", event.target.value)
+                }
+                placeholder="Ex: Analista de Segurança"
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="responsavel-telefone">Telefone</Label>
+              <Input
+                id="responsavel-telefone"
+                value={technicalResponsible.telefone}
+                onChange={(event) =>
+                  handleResponsibleChange("telefone", event.target.value)
+                }
+                placeholder="Ex: +55 11 99999-9999"
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="responsavel-email">Email</Label>
+              <Input
+                id="responsavel-email"
+                type="email"
+                value={technicalResponsible.email}
+                onChange={(event) =>
+                  handleResponsibleChange("email", event.target.value)
+                }
+                placeholder="Ex: seguranca@empresa.com"
+                className="mt-2"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         <Scope alvos={alvos} setAlvos={setAlvos} />
         <Vuln

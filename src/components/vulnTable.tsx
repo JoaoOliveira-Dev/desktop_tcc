@@ -61,6 +61,24 @@ interface VulnTableProps {
   vulns: VulnType[];
 }
 
+function richTextToText(value?: string) {
+  if (!value) return "";
+
+  return value
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|ul)>/gi, "\n")
+    .replace(/<li>/gi, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 const VulnTable = ({ vulns }: VulnTableProps) => (
   <View>
     {vulns.map((vuln, index) => (
@@ -69,15 +87,31 @@ const VulnTable = ({ vulns }: VulnTableProps) => (
           Vulnerabilidades Externas
         </Text>
         <Text style={styles.title}>
-          {index + 1}. {vuln.nome}
+          {index + 1}. {vuln.titulo || vuln.nome}
         </Text>
         <View style={styles.row}>
           <View style={styles.headerGravidade}>
-            <Text>{vuln.nome}</Text>
+            <Text>{vuln.categoria || vuln.nome}</Text>
           </View>
           <View style={styles.headerQuantidade}>
             <Text>{vuln.severidade}</Text>
           </View>
+        </View>
+        <View key="" style={styles.rows}>
+          <Text style={styles.cell1}>Categoria</Text>
+          <Text style={styles.cell2}>{vuln.categoria || vuln.nome}</Text>
+        </View>
+        <View key="" style={styles.rows}>
+          <Text style={styles.cell1}>Subcategoria</Text>
+          <Text style={styles.cell2}>{vuln.subcategoria}</Text>
+        </View>
+        <View key="" style={styles.rows}>
+          <Text style={styles.cell1}>OWASP</Text>
+          <Text style={styles.cell2}>{vuln.owasp}</Text>
+        </View>
+        <View key="" style={styles.rows}>
+          <Text style={styles.cell1}>CWE</Text>
+          <Text style={styles.cell2}>{vuln.cwe}</Text>
         </View>
         <View key="" style={styles.rows}>
           <Text style={styles.cell1}>CVSS Points</Text>
@@ -91,17 +125,26 @@ const VulnTable = ({ vulns }: VulnTableProps) => (
         </View>
 
         <Text style={styles.subtitle}>Descrição da Vulnerabilidade:</Text>
-        <Text style={styles.content}>{vuln.descVuln}</Text>
+        <Text style={styles.content}>{richTextToText(vuln.descVuln)}</Text>
         <Text style={styles.subtitle}>Ativo Afetado:</Text>
-        <Text style={styles.content}>{vuln.ativos}</Text>
+        <Text style={styles.content}>{richTextToText(vuln.ativos)}</Text>
         <Text style={styles.subtitle}>Referência:</Text>
-        <Text style={styles.content}>{vuln.referencia}</Text>
+        <Text style={styles.content}>{richTextToText(vuln.referencia)}</Text>
         <Text style={styles.subtitle}>Impacto:</Text>
-        <Text style={styles.content}>{vuln.impacto}</Text>
-        <Text style={styles.subtitle}>Ação para Reparo:</Text>
-        <Text style={styles.content}>{vuln.reparo}</Text>
+        <Text style={styles.content}>{richTextToText(vuln.impacto)}</Text>
+        <Text style={styles.subtitle}>Mitigação / Ação para Reparo:</Text>
+        <Text style={styles.content}>{richTextToText(vuln.reparo)}</Text>
         <Text style={styles.subtitle}>Proof Of Concept:</Text>
-        <Text style={styles.content}>{vuln.poc}</Text>
+        <Text style={styles.content}>{richTextToText(vuln.poc)}</Text>
+        <Text style={styles.subtitle}>Legenda da PoC:</Text>
+        <Text style={styles.content}>{vuln.pocLegenda}</Text>
+        <Text style={styles.subtitle}>Re-Test:</Text>
+        <Text style={styles.content}>
+          {vuln.retestStatus}
+          {vuln.retestDescricao
+            ? `\n${richTextToText(vuln.retestDescricao)}`
+            : ""}
+        </Text>
       </View>
     ))}
   </View>

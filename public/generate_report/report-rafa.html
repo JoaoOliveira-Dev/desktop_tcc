@@ -9,17 +9,27 @@
   font-family: "Rasa";
   src: url("/fonts/Rasa-Regular.ttf") format("truetype");
   font-weight: 400;
+  font-style: normal;
 }
 
 @font-face {
   font-family: "Rasa";
   src: url("/fonts/Rasa-Bold.ttf") format("truetype");
   font-weight: 700;
+  font-style: normal;
 }
 
 @font-face {
   font-family: "Rasa";
   src: url("/fonts/Rasa-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Rasa";
+  src: url("/fonts/Rasa-Bold.ttf") format("truetype");
+  font-weight: 700;
   font-style: italic;
 }
 
@@ -40,7 +50,10 @@ body {
   color: #262626;
   font-family: "Rasa", Georgia, serif;
   font-size: 13px;
-  line-height: 1.1;
+  line-height: 1.35;
+  font-kerning: normal;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -95,6 +108,7 @@ body {
   display: grid;
   gap: 168px;
   color: #262626;
+  font-family: "Rasa", Georgia, serif;
   font-size: 64px;
   font-style: italic;
   font-weight: 700;
@@ -138,6 +152,7 @@ body {
   position: absolute;
   right: 8px;
   color: #e7e6e6;
+  font-family: "Rasa", Georgia, serif;
   font-size: 64px;
   font-style: italic;
   font-weight: 700;
@@ -182,7 +197,7 @@ body {
   margin: 0 0 22px;
   color: #000000;
   font-size: 16px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
 }
 
@@ -190,8 +205,9 @@ body {
   margin: 0;
   color: #878786;
   font-size: 13px;
-  font-weight: 700;
-  line-height: 1.16;
+  font-weight: 400;
+  line-height: 1.42;
+  overflow-wrap: break-word;
 }
 
 .docs-table {
@@ -212,7 +228,7 @@ body {
   height: 50px;
   color: #ffffff;
   font-size: 18px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
   line-height: 1;
   text-align: left;
@@ -233,9 +249,20 @@ body {
   color: #000000;
   background: #f2f2f2;
   font-size: 16px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
-  line-height: 1.12;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.docs-table td:first-child {
+  font-weight: 700;
+}
+
+.docs-table td:last-child {
+  font-style: normal;
+  font-weight: 400;
 }
 
 .severity-table {
@@ -246,9 +273,9 @@ body {
   min-height: 92px;
   color: #262626;
   font-size: 16px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.42;
 }
 
 .severity-table td:first-child {
@@ -264,7 +291,7 @@ body {
   margin: 70px 0 58px 110px;
   color: #000000;
   font-size: 19px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
 }
 
@@ -277,9 +304,9 @@ body {
   margin: 0 0 22px 26px;
   color: #000000;
   font-size: 17px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.28;
 }
 
 .vuln-summary {
@@ -307,16 +334,20 @@ body {
 }
 
 .content-section {
-  margin: 22px 0;
+  margin: 18px 0;
+  padding: 15px 17px 17px;
+  background: #f7f7f7;
+  border-top: 1px solid #d9d9d9;
+  border-left: 5px solid #2edcff;
 }
 
 .content-section h3 {
-  margin: 0 0 21px;
+  margin: 0 0 10px;
   color: #000000;
   font-size: 18px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.25;
 }
 
 .rich-field,
@@ -325,43 +356,108 @@ body {
   margin: 0;
   color: #878786;
   font-size: 13px;
-  font-weight: 700;
-  line-height: 1.16;
+  font-weight: 400;
+  line-height: 1.42;
   white-space: pre-line;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.rich-field strong,
+.rich-field b {
+  color: #5f5f5f;
+  font-weight: 700;
+}
+
+.rich-field p + p,
+.rich-field div + div {
+  margin-top: 7px;
 }
 
 .rich-field img {
   display: block;
   width: 100%;
   max-width: 607px;
+  max-height: 760px;
   height: auto;
-  margin: 14px 0;
+  margin: 22px 0 12px;
   object-fit: contain;
   border: 0;
+}
+
+.rich-field p + img,
+.rich-field div + img {
+  margin-top: 28px;
+}
+
+.rich-field ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rich-field li {
+  margin: 0 0 8px;
 }
 
 .evidence-img {
   display: block;
   width: 100%;
   max-width: 607px;
+  max-height: 760px;
   height: auto;
-  margin: 14px 0;
+  margin: 22px 0 12px;
   object-fit: contain;
   border: 0;
 }
 
+.vulnerability,
+.content-section,
+.poc-table,
+.poc-body,
+.docs-table,
+.vuln-summary,
+.reference-list,
+table {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+
+.vuln-heading,
+.content-section h3,
+.poc-title,
+tr,
+img {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.vuln-heading,
+.content-section h3,
+.poc-title {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.rich-field,
+.poc-body {
+  overflow-wrap: anywhere;
+}
+
 .reference-list {
+  list-style: none;
   margin: 0;
-  padding: 0 0 0 72px;
+  padding: 0;
   color: #878786;
   font-size: 13px;
-  font-weight: 700;
-  line-height: 1.18;
+  font-weight: 400;
+  line-height: 1.42;
 }
 
 .reference-list li {
-  margin: 0 0 22px;
+  margin: 0 0 12px;
   padding-left: 12px;
+  overflow-wrap: anywhere;
 }
 
 .poc-table {
@@ -377,15 +473,24 @@ body {
   color: #ffffff;
   background: #2edcff;
   font-size: 18px;
-  font-style: italic;
+  font-style: normal;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.25;
   text-align: center;
 }
 
 .poc-body {
   padding: 11px;
   background: #f2f2f2;
+}
+
+.poc-caption {
+  margin-top: 12px;
+  color: #000000;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .closing-logo {
@@ -419,6 +524,37 @@ body {
   top: 1038px;
   width: 250px;
   height: auto;
+}
+
+.responsible-card {
+  position: absolute;
+  left: 112px;
+  top: 846px;
+  width: 360px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.94);
+  border-left: 6px solid #12cfee;
+}
+
+.responsible-card h2 {
+  margin: 0 0 12px;
+  color: #000000;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.responsible-card p {
+  margin: 0 0 7px;
+  color: #262626;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.responsible-card p:last-child {
+  margin-bottom: 0;
 }
 </style>
 </head>
@@ -533,11 +669,27 @@ body {
       <table class="docs-table vuln-summary">
         <thead>
           <tr>
-            <th>{{categoria}}</th>
+            <th>Classificação</th>
             <th>{{severidade}}</th>
           </tr>
         </thead>
         <tbody>
+          <tr>
+            <td>Categoria</td>
+            <td>{{categoria}}</td>
+          </tr>
+          <tr>
+            <td>Subcategoria</td>
+            <td>{{subcategoria}}</td>
+          </tr>
+          <tr>
+            <td>OWASP</td>
+            <td>{{owasp}}</td>
+          </tr>
+          <tr>
+            <td>CWE</td>
+            <td>{{cwe}}</td>
+          </tr>
           <tr>
             <td>CVSS Points</td>
             <td>{{cvss_score}}</td>
@@ -560,24 +712,12 @@ body {
       </div>
 
       <div class="content-section">
-        <h3>Referência:</h3>
-        <ul class="reference-list">
-          {{#referencias}}
-          <li>{{.}}</li>
-          {{/referencias}}
-          {{#cwe}}
-          <li>{{.}}</li>
-          {{/cwe}}
-        </ul>
-      </div>
-
-      <div class="content-section">
-        <h3>Impactos:</h3>
+        <h3>Impacto:</h3>
         <div class="rich-field">{{impacto}}</div>
       </div>
 
       <div class="content-section">
-        <h3>Ações para Reparo:</h3>
+        <h3>Mitigação / Ações para Reparo:</h3>
         <div class="rich-field">{{recomendacao}}</div>
       </div>
 
@@ -589,9 +729,25 @@ body {
           <td class="poc-body">
             <div class="rich-field">{{poc_descricao}}</div>
             <div class="rich-field">{{poc_codigo}}</div>
+            <div class="poc-caption">{{poc_legenda}}</div>
           </td>
         </tr>
       </table>
+
+      <div class="content-section">
+        <h3>Re-Test:</h3>
+        <div class="rich-field"><strong>Status:</strong> {{retest_status}}</div>
+        <div class="rich-field">{{retest_descricao}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Referências:</h3>
+        <ul class="reference-list">
+          {{#referencias}}
+          <li>{{.}}</li>
+          {{/referencias}}
+        </ul>
+      </div>
     </article>
     {{/vulnerabilidades}}
   </section>
@@ -614,6 +770,13 @@ body {
     <img class="social-bar" src="/template/rafa/image2.png" alt="">
     <img class="closing-badge" src="/template/rafa/image15.png" alt="">
     <img class="contact-card" src="/template/rafa/image23.png" alt="">
+    <div class="responsible-card">
+      <h2>Responsável Técnico</h2>
+      <p><strong>Nome:</strong> {{autor_nome}}</p>
+      <p><strong>Cargo:</strong> {{autor_cargo}}</p>
+      <p><strong>Telefone:</strong> {{autor_telefone}}</p>
+      <p><strong>Email:</strong> {{autor_email}}</p>
+    </div>
   </section>
 </body>
 </html>

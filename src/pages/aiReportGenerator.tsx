@@ -24,6 +24,7 @@ import {
   type ReportTemplateId,
 } from '@/lib/reportTemplates';
 import { downloadHtmlFile, downloadPdfFromHtml } from '@/lib/htmlReport';
+import type { TechnicalResponsible } from '@/lib/reportData';
 
 type ProcessingStatus = 'idle' | 'uploading' | 'extracting' | 'processing' | 'generating' | 'success' | 'error';
 
@@ -31,6 +32,21 @@ type Project = {
   id: number;
   name: string;
 };
+
+const DEFAULT_REPORT_TEMPLATE_ID: ReportTemplateId = 'rafa';
+
+function createEmptyTechnicalResponsible(): TechnicalResponsible {
+  return {
+    nome: '',
+    cargo: '',
+    telefone: '',
+    email: '',
+  };
+}
+
+function isReportTemplateId(value?: string | null): value is ReportTemplateId {
+  return reportTemplates.some((template) => template.id === value);
+}
 
 export default function AIReportGenerator() {
   const [file, setFile] = useState<File | null>(null);
@@ -42,7 +58,10 @@ export default function AIReportGenerator() {
   const [projectNotes, setProjectNotes] = useState<Note[]>([]);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] =
-    useState<ReportTemplateId>('rafa');
+    useState<ReportTemplateId>(DEFAULT_REPORT_TEMPLATE_ID);
+  const [technicalResponsible, setTechnicalResponsible] =
+    useState<TechnicalResponsible>(createEmptyTechnicalResponsible);
+  const [reportSettingsLoaded, setReportSettingsLoaded] = useState(true);
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [reportData, setReportData] = useState<ReportData | null>(null);
@@ -98,6 +117,100 @@ export default function AIReportGenerator() {
     };
   }, [selectedProjectId]);
 
+  useEffect(() => {
+    if (selectedProjectId === 'none') {
+      setSelectedTemplateId(DEFAULT_REPORT_TEMPLATE_ID);
+      setTechnicalResponsible(createEmptyTechnicalResponsible());
+      setReportSettingsLoaded(true);
+      return;
+    }
+
+    const numericProjectId = Number(selectedProjectId);
+
+    if (!Number.isFinite(numericProjectId)) {
+      setReportSettingsLoaded(true);
+      return;
+    }
+
+    let isCurrent = true;
+    setReportSettingsLoaded(false);
+
+    const settingsPromise =
+      window.electron?.getReportSettings?.(numericProjectId);
+
+    if (!settingsPromise) {
+      setSelectedTemplateId(DEFAULT_REPORT_TEMPLATE_ID);
+      setTechnicalResponsible(createEmptyTechnicalResponsible());
+      setReportSettingsLoaded(true);
+      return;
+    }
+
+    settingsPromise
+      .then((settings) => {
+        if (!isCurrent) return;
+
+        if (!settings) {
+          setSelectedTemplateId(DEFAULT_REPORT_TEMPLATE_ID);
+          setTechnicalResponsible(createEmptyTechnicalResponsible());
+          return;
+        }
+
+        setSelectedTemplateId(
+          isReportTemplateId(settings.template_id)
+            ? settings.template_id
+            : DEFAULT_REPORT_TEMPLATE_ID
+        );
+        setTechnicalResponsible({
+          nome: settings.autor_nome || '',
+          cargo: settings.autor_cargo || '',
+          telefone: settings.autor_telefone || '',
+          email: settings.autor_email || '',
+        });
+      })
+      .catch((error) => {
+        console.error('Erro ao carregar configurações do relatório:', error);
+      })
+      .finally(() => {
+        if (isCurrent) {
+          setReportSettingsLoaded(true);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    if (selectedProjectId === 'none' || !reportSettingsLoaded) return;
+
+    const numericProjectId = Number(selectedProjectId);
+
+    if (!Number.isFinite(numericProjectId)) return;
+
+    const timeoutId = window.setTimeout(() => {
+      window.electron
+        ?.saveReportSettings?.({
+          project_id: numericProjectId,
+          template_id: selectedTemplateId,
+          autor_nome: technicalResponsible.nome,
+          autor_cargo: technicalResponsible.cargo,
+          autor_telefone: technicalResponsible.telefone,
+          autor_email: technicalResponsible.email,
+        })
+        .catch((error) => {
+          console.error('Erro ao salvar configurações do relatório:', error);
+        });
+    }, 400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    selectedProjectId,
+    reportSettingsLoaded,
+    selectedTemplateId,
+    technicalResponsible,
+  ]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile && selectedFile.type === 'application/pdf') {
@@ -111,6 +224,16 @@ export default function AIReportGenerator() {
 
   const getSelectedProject = () =>
     projects.find((project) => String(project.id) === selectedProjectId);
+
+  const handleResponsibleChange = (
+    field: keyof TechnicalResponsible,
+    value: string
+  ) => {
+    setTechnicalResponsible((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
 
   const readNoteContent = (note: Note) => {
     const container = document.createElement('div');
@@ -217,6 +340,14 @@ export default function AIReportGenerator() {
       });
       const dataWithEvidence: ReportData = {
         ...data,
+        autor_nome:
+          technicalResponsible.nome.trim() || data.autor_nome || '',
+        autor_cargo:
+          technicalResponsible.cargo.trim() || data.autor_cargo || '',
+        autor_telefone:
+          technicalResponsible.telefone.trim() || data.autor_telefone || '',
+        autor_email:
+          technicalResponsible.email.trim() || data.autor_email || '',
         evidencias: [
           ...(data.evidencias ?? []),
           ...extractNoteEvidences(notesForReport),
@@ -254,9 +385,9 @@ export default function AIReportGenerator() {
     }
   };
 
-  const handleDownloadReport = () => {
+  const handleDownloadReport = async () => {
     if (!generatedHtml) return;
-    downloadHtmlFile(generatedHtml, 'relatorio-pentest.html');
+    await downloadHtmlFile(generatedHtml, 'relatorio-pentest.html');
   };
 
   const handleDownloadPDF = async () => {
@@ -379,6 +510,78 @@ export default function AIReportGenerator() {
         </CardContent>
       </Card>
 
+      {/* Technical Responsible Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Responsável Técnico</CardTitle>
+          <CardDescription>
+            Preencha os dados que serão exibidos na seção final do relatório.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div>
+            <Label htmlFor="ai-responsavel-nome" className="block mb-2">
+              Nome
+            </Label>
+            <Input
+              id="ai-responsavel-nome"
+              value={technicalResponsible.nome}
+              onChange={(event) =>
+                handleResponsibleChange('nome', event.target.value)
+              }
+              placeholder="Ex: João Silva"
+              className="bg-slate-800 border-slate-700"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="ai-responsavel-cargo" className="block mb-2">
+              Cargo
+            </Label>
+            <Input
+              id="ai-responsavel-cargo"
+              value={technicalResponsible.cargo}
+              onChange={(event) =>
+                handleResponsibleChange('cargo', event.target.value)
+              }
+              placeholder="Ex: Analista de Segurança"
+              className="bg-slate-800 border-slate-700"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="ai-responsavel-telefone" className="block mb-2">
+              Telefone
+            </Label>
+            <Input
+              id="ai-responsavel-telefone"
+              value={technicalResponsible.telefone}
+              onChange={(event) =>
+                handleResponsibleChange('telefone', event.target.value)
+              }
+              placeholder="Ex: +55 11 99999-9999"
+              className="bg-slate-800 border-slate-700"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="ai-responsavel-email" className="block mb-2">
+              Email
+            </Label>
+            <Input
+              id="ai-responsavel-email"
+              type="email"
+              value={technicalResponsible.email}
+              onChange={(event) =>
+                handleResponsibleChange('email', event.target.value)
+              }
+              placeholder="Ex: seguranca@empresa.com"
+              className="bg-slate-800 border-slate-700"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Configuration Section */}
       <Card>
         <CardHeader>
@@ -497,7 +700,8 @@ export default function AIReportGenerator() {
             (!file && selectedProjectId === 'none') ||
             !apiKey ||
             (status !== 'idle' && status !== 'error') ||
-            isLoadingNotes
+            isLoadingNotes ||
+            !reportSettingsLoaded
           }
           size="lg"
           className="flex-1"

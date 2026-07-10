@@ -159,12 +159,124 @@ h2.section-title {
 }
 
 .vuln-section {
-  margin-top:18px;
+  margin-top:20px;
+  padding-top:18px;
+  border-top:1px solid #e5e7eb;
 }
 
 .vuln-section h4 {
-  margin-bottom:6px;
+  margin-bottom:10px;
   color:#374151;
+  font-size:13px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.section-body {
+  background:#f9fafb;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:14px 16px;
+}
+
+.section-body p,
+.section-body div {
+  margin-bottom:8px;
+}
+
+.section-body p:last-child,
+.section-body div:last-child {
+  margin-bottom:0;
+}
+
+.section-body ul {
+  margin-left:0;
+  padding-left:0;
+  list-style:none;
+}
+
+.section-body li {
+  margin-bottom:8px;
+}
+
+.section-body img {
+  display:block;
+  width:auto;
+  max-width:100%;
+  max-height:780px;
+  height:auto;
+  margin:18px 0 10px;
+  object-fit:contain;
+}
+
+.section-body p + img,
+.section-body div + img {
+  margin-top:24px;
+}
+
+.vuln,
+.vuln-section,
+.section-body {
+  break-inside:auto;
+  page-break-inside:auto;
+}
+
+h2.section-title,
+.vuln-header,
+.vuln-section h4,
+.cvss-grid,
+.cvss-item,
+.card,
+tr,
+img {
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+
+.vuln-section h4 {
+  break-after:avoid;
+  page-break-after:avoid;
+}
+
+.section-body,
+code {
+  overflow-wrap:anywhere;
+}
+
+.cvss-grid {
+  display:grid;
+  grid-template-columns:180px 1fr;
+  gap:12px;
+}
+
+.cvss-item {
+  background:#f9fafb;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:14px 16px;
+}
+
+.cvss-label {
+  display:block;
+  margin-bottom:6px;
+  color:#6b7280;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.cvss-score {
+  color:#111827;
+  font-size:24px;
+  font-weight:800;
+}
+
+.cvss-vector {
+  color:#1f2937;
+  font-size:13px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
 }
 
 code {
@@ -177,11 +289,42 @@ code {
   font-size:13px;
 }
 
+.poc-caption {
+  margin-top:10px;
+  color:#374151;
+  font-size:13px;
+  font-style:italic;
+  font-weight:600;
+}
+
 /* =========================
    LIST
 ========================= */
 ul {
   margin-left:20px;
+}
+
+.reference-list {
+  margin-left:0;
+  padding-left:0;
+  list-style:none;
+}
+
+.reference-list li {
+  margin-bottom:8px;
+  overflow-wrap:anywhere;
+}
+
+.responsible-grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.responsible-grid span {
+  display:block;
+  margin-top:4px;
+  color:#374151;
 }
 
 /* =========================
@@ -268,56 +411,80 @@ ul {
 
 <div class="vuln-section">
 <h4>Categoria</h4>
-<p>{{categoria}}</p>
+<div class="section-body">{{categoria}}</div>
 </div>
 
 <div class="vuln-section">
-<h4>CVSS</h4>
-<p>{{cvss_score}} — {{cvss_vector}}</p>
+<h4>Subcategoria</h4>
+<div class="section-body">{{subcategoria}}</div>
+</div>
+
+<div class="vuln-section">
+<h4>OWASP/CWE</h4>
+<div class="section-body">
+<p><strong>OWASP:</strong> {{owasp}}</p>
+<p><strong>CWE:</strong> {{cwe}}</p>
+</div>
+</div>
+
+<div class="vuln-section">
+<h4>CVSS Points</h4>
+<div class="cvss-grid">
+<div class="cvss-item">
+<span class="cvss-label">Score</span>
+<span class="cvss-score">{{cvss_score}}</span>
+</div>
+<div class="cvss-item">
+<span class="cvss-label">Vetor</span>
+<div class="cvss-vector">{{cvss_vector}}</div>
+</div>
+</div>
 </div>
 
 <div class="vuln-section">
 <h4>Descrição</h4>
-<p>{{descricao}}</p>
+<div class="section-body">{{descricao}}</div>
 </div>
 
 <div class="vuln-section">
 <h4>Ativo Afetado</h4>
-<p>{{ativo_afetado}}</p>
+<div class="section-body">{{ativo_afetado}}</div>
 </div>
 
 <div class="vuln-section">
 <h4>Impacto</h4>
-<p>{{impacto}}</p>
+<div class="section-body">{{impacto}}</div>
 </div>
 
 <div class="vuln-section">
 <h4>Recomendação</h4>
-<p>{{recomendacao}}</p>
+<div class="section-body">{{recomendacao}}</div>
 </div>
 
 <div class="vuln-section">
 <h4>Referências</h4>
-<ul>
+<div class="section-body">
+<ul class="reference-list">
 {{#referencias}}
 <li>{{.}}</li>
 {{/referencias}}
 </ul>
 </div>
-
-<div class="vuln-section">
-<h4>CWE</h4>
-<ul>
-{{#cwe}}
-<li>{{.}}</li>
-{{/cwe}}
-</ul>
 </div>
 
 <div class="vuln-section">
 <h4>Proof of Concept</h4>
-<p>{{poc_descricao}}</p>
+<div class="section-body">{{poc_descricao}}</div>
 <code>{{poc_codigo}}</code>
+<div class="poc-caption">{{poc_legenda}}</div>
+</div>
+
+<div class="vuln-section">
+<h4>Re-Test</h4>
+<div class="section-body">
+<p><strong>Status:</strong> {{retest_status}}</p>
+<div>{{retest_descricao}}</div>
+</div>
 </div>
 
 </div>
@@ -328,11 +495,11 @@ ul {
 
 <h2 class="section-title">Responsável Técnico</h2>
 
-<div class="card">
-<p><strong>Nome:</strong> {{autor_nome}}</p>
-<p><strong>Cargo:</strong> {{autor_cargo}}</p>
-<p><strong>Telefone:</strong> {{autor_telefone}}</p>
-<p><strong>Email:</strong> {{autor_email}}</p>
+<div class="card responsible-grid">
+<div><strong>Nome</strong><span>{{autor_nome}}</span></div>
+<div><strong>Cargo</strong><span>{{autor_cargo}}</span></div>
+<div><strong>Telefone</strong><span>{{autor_telefone}}</span></div>
+<div><strong>Email</strong><span>{{autor_email}}</span></div>
 </div>
 
 <div class="footer">
