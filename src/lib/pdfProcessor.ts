@@ -49,6 +49,7 @@ export interface ReportData {
     cvss_score: string | number | null;
     cvss_vector: string | null;
     descricao: string | null;
+    metodo_exploracao?: string | null;
     ativo_afetado: string | null;
     impacto: string | null;
     recomendacao: string | null;
@@ -120,7 +121,8 @@ Para cada vulnerabilidade:
 - "subcategoria": especifique o tipo, por exemplo Stored, Reflected, IDOR, SPF permissivo ou TLS fraco.
 - "owasp": informe o item do OWASP Top 10 quando aplicável.
 - "cwe": informe a CWE quando aplicável.
-- "descricao": explique primeiro a vulnerabilidade de forma geral e depois como ela aparece no ambiente analisado.
+- "descricao": explique a vulnerabilidade de forma breve, focando no conceito e em como ela aparece no ambiente analisado.
+- "metodo_exploracao": descreva os passos, pré-condições, entradas utilizadas, resposta observada e evidências que demonstram a exploração autorizada.
 - "impacto": divida o texto em "Impacto Técnico" e "Impacto de Negócio".
 - "recomendacao": descreva medidas claras de mitigação, preferencialmente úteis para desenvolvimento/operação.
 - "poc_descricao": registre a prova de conceito de forma objetiva, com passos e evidências observadas.
@@ -241,6 +243,7 @@ SCHEMA
       "cvss_score": number | null,
       "cvss_vector": string | null,
       "descricao": string | null,
+      "metodo_exploracao": string | null,
       "ativo_afetado": string | null,
       "impacto": string | null,
       "recomendacao": string | null,
@@ -564,6 +567,7 @@ function applyMarkdownBold(value: string) {
 function isRichTextKey(key: string) {
   return [
     'descricao',
+    'metodo_exploracao',
     'ativo_afetado',
     'impacto',
     'recomendacao',

@@ -126,6 +126,10 @@ const VulnTable = ({ vulns }: VulnTableProps) => (
 
         <Text style={styles.subtitle}>Descrição da Vulnerabilidade:</Text>
         <Text style={styles.content}>{richTextToText(vuln.descVuln)}</Text>
+        <Text style={styles.subtitle}>Método de Exploração:</Text>
+        <Text style={styles.content}>
+          {richTextToText(vuln.metodoExploracao)}
+        </Text>
         <Text style={styles.subtitle}>Ativo Afetado:</Text>
         <Text style={styles.content}>{richTextToText(vuln.ativos)}</Text>
         <Text style={styles.subtitle}>Referência:</Text>

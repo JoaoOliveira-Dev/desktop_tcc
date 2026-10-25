@@ -1,4 +1,4 @@
-export type ReportTemplateId = "default" | "rafa";
+export type ReportTemplateId = "default" | "rafa" | "clavis";
 
 export type ReportTemplate = {
   id: ReportTemplateId;
@@ -13,6 +13,12 @@ export const reportTemplates: ReportTemplate[] = [
     name: "Rafa / OSTEC",
     description: "Estrutura visual baseada no REPORT PARCIAL PENTEST.",
     path: "/generate_report/report-rafa.html",
+  },
+  {
+    id: "clavis",
+    name: "Clavis Segurança da Informação",
+    description: "Template em tema verde escuro com identidade visual da Clavis.",
+    path: "/generate_report/report-clavis.html",
   },
   {
     id: "default",

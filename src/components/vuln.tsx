@@ -68,6 +68,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
   const [owasp, setOwasp] = React.useState("");
   const [cwe, setCwe] = React.useState("");
   const [descVuln, setDescVuln] = React.useState("");
+  const [metodoExploracao, setMetodoExploracao] = React.useState("");
   const [ativos, setAtivos] = React.useState("");
   const [referencia, setReferencia] = React.useState("");
   const [impacto, setImpacto] = React.useState("");
@@ -92,6 +93,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
     setOwasp("");
     setCwe("");
     setDescVuln("");
+    setMetodoExploracao("");
     setAtivos("");
     setReferencia("");
     setImpacto("");
@@ -127,6 +129,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
       owasp,
       cwe,
       descVuln,
+      metodoExploracao,
       ativos,
       referencia,
       impacto,
@@ -185,6 +188,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
     setOwasp(nextValue ? vulnerability.owasp || "" : "");
     setCwe(nextValue ? vulnerability.cwe || "" : "");
     setDescVuln(nextValue ? vulnerability.desc || "" : "");
+    setMetodoExploracao(nextValue ? vulnerability.metodoExploracao || "" : "");
     setReferencia(nextValue ? vulnerability.referencia || "" : "");
     setAtivos("");
     setImpacto(nextValue ? vulnerability.impacto || "" : "");
@@ -220,6 +224,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
     setOwasp(vulnerability.owasp || "");
     setCwe(vulnerability.cwe || "");
     setDescVuln(vulnerability.descVuln);
+    setMetodoExploracao(vulnerability.metodoExploracao || "");
     setAtivos(vulnerability.ativos);
     setReferencia(vulnerability.referencia);
     setImpacto(vulnerability.impacto);
@@ -248,6 +253,7 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
       setOwasp("");
       setCwe("");
       setDescVuln("");
+      setMetodoExploracao("");
       setAtivos("");
       setReferencia("");
       setImpacto("");
@@ -409,6 +415,17 @@ export default function Vuln({ onAddOrUpdateVulnerability, vulns, setVulns }: Vu
                 placeholder="Anote a DESCRIÇÃO da vulnerabilidade"
                 value={descVuln}
                 onChange={setDescVuln}
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <Label htmlFor="vuln-exploitation-method">
+                Método de exploração
+              </Label>
+              <RichTextEditor
+                placeholder="Anote os passos, pré-condições e evidências do MÉTODO DE EXPLORAÇÃO"
+                value={metodoExploracao}
+                onChange={setMetodoExploracao}
+                minHeight="min-h-[160px]"
               />
             </div>
             <div className="flex flex-col space-y-1.5">

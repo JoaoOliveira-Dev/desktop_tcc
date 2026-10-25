@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório de Pentest - Clavis Segurança da Informação</title>
+
+<style>
+@font-face {
+  font-family: "Open Sans";
+  src: url("/fonts/OpenSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("/fonts/OpenSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Open Sans";
+  src: url("/fonts/OpenSans-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+:root {
+  --clavis-green-deep: #003f36;
+  --clavis-green-dark: #005247;
+  --clavis-green: #006b5d;
+  --clavis-green-soft: #dcefe9;
+  --clavis-green-pale: #f3faf7;
+  --accent: #9acb3d;
+  --ink: #10231f;
+  --muted: #5c6f68;
+  --line: #d6e3de;
+  --paper: #ffffff;
+  --panel: #f6f9f7;
+  --critical: #7f1d1d;
+  --high: #dc2626;
+  --medium: #d97706;
+  --low: #2563eb;
+  --info: #64748b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #e8efeb;
+  color: var(--ink);
+  font-family: "Open Sans", Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.report-page {
+  position: relative;
+  width: 794px;
+  min-height: 1123px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--paper);
+  break-after: page;
+  page-break-after: always;
+}
+
+.report-page:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.fixed-page {
+  height: 1123px;
+  min-height: 1123px;
+}
+
+.flow-page {
+  min-height: 1123px;
+  overflow: visible;
+  padding: 70px 72px 86px;
+}
+
+.cover-page {
+  display: grid;
+  grid-template-columns: 292px 1fr;
+  background: var(--clavis-green-deep);
+  color: #ffffff;
+}
+
+.cover-aside {
+  position: relative;
+  padding: 62px 34px;
+  background: var(--paper);
+}
+
+.cover-aside::after {
+  content: "";
+  position: absolute;
+  right: -22px;
+  top: 0;
+  width: 22px;
+  height: 100%;
+  background: var(--accent);
+}
+
+.cover-logo-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 224px;
+  min-height: 118px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.cover-logo,
+.page-logo,
+.closing-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cover-name {
+  position: absolute;
+  left: 34px;
+  bottom: 70px;
+  width: 220px;
+  color: var(--clavis-green-deep);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.cover-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 82px 64px 76px 88px;
+}
+
+.cover-kicker,
+.section-kicker,
+.header-kicker {
+  margin: 0;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.cover-title {
+  margin: 22px 0 0;
+  color: #ffffff;
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.02;
+}
+
+.cover-subtitle {
+  max-width: 330px;
+  margin: 24px 0 0;
+  color: #d7e9e3;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.cover-meta {
+  display: grid;
+  gap: 14px;
+  margin-top: 64px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.meta-label {
+  color: #a9cbc2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.meta-value {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 44px;
+  padding-bottom: 22px;
+  border-bottom: 4px solid var(--clavis-green-deep);
+}
+
+.page-logo-wrap {
+  width: 152px;
+}
+
+.header-copy {
+  text-align: right;
+}
+
+.header-title {
+  margin: 6px 0 0;
+  color: var(--clavis-green-deep);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 22px;
+  color: var(--clavis-green-deep);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.section-title::before {
+  content: "";
+  display: block;
+  width: 9px;
+  height: 34px;
+  background: var(--accent);
+}
+
+.subsection-title {
+  margin: 0 0 12px;
+  color: var(--clavis-green-deep);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.panel {
+  padding: 20px 22px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--clavis-green);
+}
+
+.panel p {
+  margin: 0;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.severity-card {
+  min-height: 86px;
+  padding: 12px 10px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.severity-card strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.severity-card span {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.severity-critical,
+.critical {
+  background: var(--critical);
+}
+
+.severity-high,
+.high {
+  background: var(--high);
+}
+
+.severity-medium,
+.medium {
+  background: var(--medium);
+}
+
+.severity-low,
+.low {
+  background: var(--low);
+}
+
+.severity-info,
+.info {
+  background: var(--info);
+}
+
+.report-table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.report-table th,
+.report-table td {
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.report-table th {
+  color: #ffffff;
+  background: var(--clavis-green-deep);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.report-table td {
+  color: var(--ink);
+  background: #ffffff;
+}
+
+.report-table tbody tr:nth-child(even) td {
+  background: var(--clavis-green-pale);
+}
+
+.scope-table th:first-child {
+  width: 150px;
+}
+
+.content-block {
+  margin-top: 28px;
+}
+
+.severity-definitions td:first-child {
+  width: 155px;
+  color: var(--clavis-green-deep);
+  font-weight: 700;
+}
+
+.vulnerability {
+  margin: 0 0 40px;
+  padding: 0 0 34px;
+  border-bottom: 2px solid var(--line);
+}
+
+.vulnerability:last-child {
+  border-bottom: 0;
+}
+
+.vuln-top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.vuln-heading {
+  margin: 0;
+  color: var(--clavis-green-deep);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.severity-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  min-height: 32px;
+  padding: 7px 12px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.vuln-meta {
+  margin-bottom: 22px;
+}
+
+.vuln-meta td:first-child {
+  width: 170px;
+  color: var(--clavis-green-deep);
+  font-weight: 700;
+}
+
+.content-section {
+  margin: 18px 0;
+  padding: 17px 19px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--clavis-green);
+}
+
+.content-section h3 {
+  margin: 0 0 10px;
+  color: var(--clavis-green-deep);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rich-field,
+.rich-field p,
+.rich-field div {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+}
+
+.rich-field strong,
+.rich-field b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.rich-field p + p,
+.rich-field div + div {
+  margin-top: 8px;
+}
+
+.rich-field ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rich-field li {
+  margin: 0 0 8px;
+}
+
+.rich-field img,
+.evidence-img {
+  display: block;
+  width: 100%;
+  max-width: 606px;
+  max-height: 760px;
+  height: auto;
+  margin: 20px 0 10px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.reference-list {
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  list-style: none;
+}
+
+.reference-list li {
+  margin: 0 0 9px;
+  padding-left: 14px;
+  position: relative;
+  overflow-wrap: anywhere;
+}
+
+.reference-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+}
+
+.poc-box {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+}
+
+.poc-title {
+  margin: 0;
+  padding: 13px 16px;
+  color: #ffffff;
+  background: var(--clavis-green-deep);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.poc-body {
+  padding: 16px 18px;
+  background: #ffffff;
+}
+
+.poc-caption {
+  margin-top: 12px;
+  color: var(--ink);
+  font-size: 11px;
+  font-style: italic;
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.evidence-page .content-section {
+  padding: 18px;
+  background: #ffffff;
+}
+
+.closing-page {
+  background: var(--clavis-green-deep);
+  color: #ffffff;
+}
+
+.closing-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 22px;
+  background: var(--accent);
+}
+
+.closing-card {
+  position: absolute;
+  left: 72px;
+  top: 118px;
+  width: 650px;
+  min-height: 320px;
+  padding: 42px;
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.closing-logo-wrap {
+  width: 220px;
+  margin-bottom: 36px;
+}
+
+.closing-title {
+  margin: 0;
+  color: var(--clavis-green-deep);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.18;
+}
+
+.closing-copy {
+  max-width: 430px;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.responsible-card {
+  position: absolute;
+  left: 72px;
+  bottom: 118px;
+  width: 650px;
+  padding: 26px 30px;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-left: 7px solid var(--accent);
+}
+
+.responsible-card h2 {
+  margin: 0 0 18px;
+  color: #ffffff;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.responsible-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 24px;
+}
+
+.responsible-grid strong {
+  display: block;
+  color: #a9cbc2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.responsible-grid span {
+  display: block;
+  margin-top: 4px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.confidential {
+  position: absolute;
+  right: 72px;
+  bottom: 54px;
+  margin: 0;
+  color: #a9cbc2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vulnerability,
+.content-section,
+.poc-box,
+.poc-body,
+.report-table,
+table {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+
+.page-header,
+.section-title,
+.subsection-title,
+.vuln-top,
+.content-section h3,
+.poc-title,
+tr,
+img {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.section-title,
+.subsection-title,
+.vuln-top,
+.content-section h3,
+.poc-title {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+</style>
+</head>
+
+<body>
+  <section class="report-page fixed-page cover-page">
+    <aside class="cover-aside">
+      <div class="cover-logo-panel">
+        <img class="cover-logo" src="/template/clavis/logo-clavis-verde-destaque-1.png" alt="Clavis Segurança da Informação">
+      </div>
+      <div class="cover-name">Clavis Segurança da Informação</div>
+    </aside>
+
+    <main class="cover-main">
+      <p class="cover-kicker">Relatório Confidencial</p>
+      <h1 class="cover-title">Relatório de Pentest</h1>
+      <p class="cover-subtitle">Avaliação técnica de segurança da informação, riscos identificados e recomendações de mitigação.</p>
+
+      <div class="cover-meta">
+        <div class="meta-row">
+          <div class="meta-label">Domínio</div>
+          <div class="meta-value">{{dominio_empresa}}</div>
+        </div>
+        <div class="meta-row">
+          <div class="meta-label">Data</div>
+          <div class="meta-value">{{data_relatorio}}</div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <section class="report-page flow-page">
+    <header class="page-header">
+      <div class="page-logo-wrap">
+        <img class="page-logo" src="/template/clavis/logo-clavis-verde-destaque-1.png" alt="Clavis Segurança da Informação">
+      </div>
+      <div class="header-copy">
+        <p class="header-kicker">Clavis Segurança da Informação</p>
+        <p class="header-title">Resumo e Escopo</p>
+      </div>
+    </header>
+
+    <h2 class="section-title">Resumo Executivo</h2>
+
+    <div class="intro-grid">
+      <div class="panel">
+        <h3 class="subsection-title">Visão geral</h3>
+        <p>{{resumo_executivo}}</p>
+      </div>
+
+      <div class="summary-grid">
+        <div class="severity-card severity-critical"><strong>Critical</strong><span>{{total_critical}}</span></div>
+        <div class="severity-card severity-high"><strong>High</strong><span>{{total_high}}</span></div>
+        <div class="severity-card severity-medium"><strong>Medium</strong><span>{{total_medium}}</span></div>
+        <div class="severity-card severity-low"><strong>Low</strong><span>{{total_low}}</span></div>
+        <div class="severity-card severity-info"><strong>Info</strong><span>{{total_info}}</span></div>
+      </div>
+    </div>
+
+    <div class="content-block">
+      <h3 class="subsection-title">Escopo</h3>
+      <div class="panel">
+        <p>{{escopo_descricao}}</p>
+      </div>
+    </div>
+
+    <div class="content-block">
+      <h3 class="subsection-title">Alvos avaliados</h3>
+      <table class="report-table scope-table">
+        <thead>
+          <tr>
+            <th>Identificador</th>
+            <th>URL</th>
+            <th>Login / Observação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#alvos}}
+          <tr>
+            <td>{{descricao}}</td>
+            <td>{{url}}</td>
+            <td>{{login}}</td>
+          </tr>
+          {{/alvos}}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="content-block">
+      <h3 class="subsection-title">Critérios de severidade</h3>
+      <table class="report-table severity-definitions">
+        <tbody>
+          <tr>
+            <td>Critical</td>
+            <td>Falhas que podem permitir comprometimento imediato, acesso não autorizado relevante, execução de ações sensíveis ou impacto severo sobre dados e disponibilidade.</td>
+          </tr>
+          <tr>
+            <td>High</td>
+            <td>Falhas com alto potencial de exploração ou impacto, normalmente associadas a elevação de privilégio, exposição de dados ou abuso consistente de funcionalidades.</td>
+          </tr>
+          <tr>
+            <td>Medium</td>
+            <td>Falhas que exigem condições adicionais para exploração, mas podem contribuir para cenários de ataque mais amplos ou exposição moderada.</td>
+          </tr>
+          <tr>
+            <td>Low</td>
+            <td>Achados de menor impacto direto, úteis para endurecimento de segurança e redução de superfície de ataque.</td>
+          </tr>
+          <tr>
+            <td>Info</td>
+            <td>Observações informativas que auxiliam na melhoria contínua do ambiente e no acompanhamento de boas práticas.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="report-page flow-page">
+    <header class="page-header">
+      <div class="page-logo-wrap">
+        <img class="page-logo" src="/template/clavis/logo-clavis-verde-destaque-1.png" alt="Clavis Segurança da Informação">
+      </div>
+      <div class="header-copy">
+        <p class="header-kicker">Relatório Técnico</p>
+        <p class="header-title">Vulnerabilidades Identificadas</p>
+      </div>
+    </header>
+
+    <h2 class="section-title">Vulnerabilidades Identificadas</h2>
+
+    {{#vulnerabilidades}}
+    <article class="vulnerability">
+      <div class="vuln-top">
+        <h2 class="vuln-heading">{{titulo}}</h2>
+        <span class="severity-pill severity-{{severidade}}">{{severidade}}</span>
+      </div>
+
+      <table class="report-table vuln-meta">
+        <tbody>
+          <tr>
+            <td>Categoria</td>
+            <td>{{categoria}}</td>
+          </tr>
+          <tr>
+            <td>Subcategoria</td>
+            <td>{{subcategoria}}</td>
+          </tr>
+          <tr>
+            <td>OWASP</td>
+            <td>{{owasp}}</td>
+          </tr>
+          <tr>
+            <td>CWE</td>
+            <td>{{cwe}}</td>
+          </tr>
+          <tr>
+            <td>CVSS Points</td>
+            <td>{{cvss_score}}</td>
+          </tr>
+          <tr>
+            <td>Vetor CVSS</td>
+            <td>{{cvss_vector}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="content-section">
+        <h3>Descrição da Vulnerabilidade</h3>
+        <div class="rich-field">{{descricao}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Método de Exploração</h3>
+        <div class="rich-field">{{metodo_exploracao}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Ativo Afetado</h3>
+        <div class="rich-field">{{ativo_afetado}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Impacto</h3>
+        <div class="rich-field">{{impacto}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Recomendação</h3>
+        <div class="rich-field">{{recomendacao}}</div>
+      </div>
+
+      <div class="poc-box">
+        <h3 class="poc-title">Proof of Concept</h3>
+        <div class="poc-body">
+          <div class="rich-field">{{poc_descricao}}</div>
+          <div class="rich-field">{{poc_codigo}}</div>
+          <div class="poc-caption">{{poc_legenda}}</div>
+        </div>
+      </div>
+
+      <div class="content-section">
+        <h3>Re-Test</h3>
+        <div class="rich-field"><strong>Status:</strong> {{retest_status}}</div>
+        <div class="rich-field">{{retest_descricao}}</div>
+      </div>
+
+      <div class="content-section">
+        <h3>Referências</h3>
+        <ul class="reference-list">
+          {{#referencias}}
+          <li>{{.}}</li>
+          {{/referencias}}
+        </ul>
+      </div>
+    </article>
+    {{/vulnerabilidades}}
+  </section>
+
+  {{#evidencias}}
+  <section class="report-page flow-page evidence-page">
+    <header class="page-header">
+      <div class="page-logo-wrap">
+        <img class="page-logo" src="/template/clavis/logo-clavis-verde-destaque-1.png" alt="Clavis Segurança da Informação">
+      </div>
+      <div class="header-copy">
+        <p class="header-kicker">Anexo Técnico</p>
+        <p class="header-title">Evidência</p>
+      </div>
+    </header>
+
+    <h2 class="section-title">{{titulo}}</h2>
+    <div class="content-section">
+      <div class="rich-field">{{descricao}}</div>
+      <img class="evidence-img" src="{{src}}" alt="Evidência">
+    </div>
+  </section>
+  {{/evidencias}}
+
+  <section class="report-page fixed-page closing-page">
+    <div class="closing-accent"></div>
+
+    <div class="closing-card">
+      <div class="closing-logo-wrap">
+        <img class="closing-logo" src="/template/clavis/logo-clavis-verde-destaque-1.png" alt="Clavis Segurança da Informação">
+      </div>
+      <h1 class="closing-title">Clavis Segurança da Informação</h1>
+      <p class="closing-copy">Documento preparado para apoiar a priorização, correção e acompanhamento dos riscos de segurança identificados durante a avaliação.</p>
+    </div>
+
+    <div class="responsible-card">
+      <h2>Responsável Técnico</h2>
+      <div class="responsible-grid">
+        <div>
+          <strong>Nome</strong>
+          <span>{{autor_nome}}</span>
+        </div>
+        <div>
+          <strong>Cargo</strong>
+          <span>{{autor_cargo}}</span>
+        </div>
+        <div>
+          <strong>Telefone</strong>
+          <span>{{autor_telefone}}</span>
+        </div>
+        <div>
+          <strong>Email</strong>
+          <span>{{autor_email}}</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="confidential">Relatório Confidencial - Uso Restrito</p>
+  </section>
+</body>
+</html>

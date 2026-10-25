@@ -12,6 +12,7 @@ export interface Alvo {
     owasp?: string;
     cwe?: string;
     descVuln: string;
+    metodoExploracao?: string;
     ativos: string;
     referencia: string;
     impacto: string;

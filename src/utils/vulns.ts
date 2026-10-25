@@ -9,6 +9,7 @@ export interface VulnerabilityPreset {
   owasp?: string;
   cwe?: string;
   desc?: string;
+  metodoExploracao?: string;
   referencia?: string;
   impacto?: string;
   reparo?: string;
@@ -32,9 +33,19 @@ const references = (...items: string[]) =>
 const description = (summary: string, contextHint: string) =>
   richText(
     paragraph(summary),
-    paragraph(contextHint),
+    paragraph(contextHint)
+  );
+
+const exploitationMethod = (label: string) =>
+  richText(
     paragraph(
-      "Durante a anotação, registre o endpoint, parâmetro, perfil de usuário, condição de exploração e qualquer limitação observada no teste autorizado."
+      "A validação deve ser conduzida em ambiente autorizado, reproduzindo o fluxo afetado com o perfil, endpoint e parâmetros documentados durante o teste."
+    ),
+    paragraph(
+      `Para ${label}, registre os passos mínimos que comprovam a exploração, incluindo pré-condições, entrada utilizada, resposta observada e evidência do comportamento inseguro.`
+    ),
+    paragraph(
+      "Use valores controlados, evite ações destrutivas, não exponha dados sensíveis desnecessários e interrompa o teste ao confirmar o impacto técnico."
     )
   );
 
@@ -75,7 +86,7 @@ const defaultRetest = richText(
   )
 );
 
-export const vulnerabilidadesIniciais: VulnerabilityPreset[] = [
+const vulnerabilityPresetTemplates: VulnerabilityPreset[] = [
   {
     value: "Cross-Site Scripting (XSS)",
     label: "Cross-Site Scripting (XSS)",
@@ -1523,5 +1534,12 @@ export const vulnerabilidadesIniciais: VulnerabilityPreset[] = [
     ),
   },
 ];
+
+export const vulnerabilidadesIniciais: VulnerabilityPreset[] =
+  vulnerabilityPresetTemplates.map((vulnerability) => ({
+    ...vulnerability,
+    metodoExploracao:
+      vulnerability.metodoExploracao || exploitationMethod(vulnerability.label),
+  }));
 
 export const InformationDisclosure = [];

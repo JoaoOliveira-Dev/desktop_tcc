@@ -103,6 +103,7 @@ export function createReportDataFromManualInput(
       cvss_score: vuln.cvssData?.score ?? "",
       cvss_vector: buildCvssVector(vuln),
       descricao: vuln.descVuln,
+      metodo_exploracao: vuln.metodoExploracao || "",
       ativo_afetado: vuln.ativos,
       impacto: vuln.impacto,
       recomendacao: vuln.reparo,
